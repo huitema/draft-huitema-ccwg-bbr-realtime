@@ -1,24 +1,4 @@
 ---
-###
-# Internet-Draft Markdown Template
-#
-# Rename this file from draft-todo-yourname-protocol.md to get started.
-# Draft name format is "draft-<yourname>-<workgroup>-<name>.md".
-#
-# For initial setup, you only need to edit the first block of fields.
-# Only "title" needs to be changed; delete "abbrev" if your title is short.
-# Any other content can be edited, but be careful not to introduce errors.
-# Some fields will be set automatically during setup if they are unchanged.
-#
-# Don't include "-00" or "-latest" in the filename.
-# Labels in the form draft-<yourname>-<workgroup>-<name>-latest are used by
-# the tools to refer to the current version; see "docname" for example.
-#
-# This template uses kramdown-rfc: https://github.com/cabo/kramdown-rfc
-# You can replace the entire file if you prefer a different format.
-# Change the file extension to match the format (.xml for XML, etc...)
-#
-###
 title: "BBR Improvements for Realtime connections"
 abbrev: "BBR-Realtime"
 category: info
@@ -29,19 +9,19 @@ number:
 date:
 consensus: true
 v: 3
-area: WIT
-workgroup: CCWG
+area: "Web and Internet Transport"
+workgroup: "Congestion Control Working Group"
 keyword:
  - BBR
  - Realtime Communication
  - Media over QUIC
 venue:
-  group: CCWG
-  type: Working Group
-  mail: ccwg@ietf.org
-  arch: https://www.ietf.org/mailman/listinfo/ccwg
-  github: huitema/draft-huitema-ccwg-bbr-realtime
-  latest: https://example.com/LATEST
+  group: "Congestion Control Working Group"
+  type: "Working Group"
+  mail: "ccwg@ietf.org"
+  arch: "https://mailarchive.ietf.org/arch/browse/ccwg/"
+  github: "huitema/draft-huitema-ccwg-bbr-realtime"
+  latest: "https://huitema.github.io/draft-huitema-ccwg-bbr-realtime/draft-huitema-ccwg-bbr-realtime.html"
 
 author:
  -
