@@ -33,6 +33,40 @@ author:
 normative:
 
 informative:
+   QUIC-TRANSPORT: rfc9000
+   I-D.cardwell-iccrg-bbr-congestion-control:
+   BBRv3-Slides:
+    target: https://datatracker.ietf.org/meeting/117/materials/slides-117-ccwg-bbrv3-algorithm-bug-fixes-and-public-internet-deployment-00
+    title: "BBRv3: Algorithm Bug Fixes and Public Internet Deployment"
+    date: "Jul 26, 2023"
+    seriesinfo: "Materials for IETF 117 Meeting"
+    author:
+    -
+      ins: N. Cardwell
+    -
+      ins: Y. Cheng
+    -
+      ins: K. Yang
+    -
+      ins: D. Morley
+    -
+      ins: S. Hassas Yeganeh
+    -
+      ins: P. Jha
+    -
+      ins: Y. Seung
+    -
+      ins: V. Jacobson
+    -
+      ins: I. Swett
+    -
+      ins: B. Wu
+    -
+      ins: V. Vasiliev
+
+
+
+
 
 
 --- abstract
@@ -73,8 +107,10 @@ to schedule just the right amount of transmission to obtain a good experience
 without creating queues.
 
 In our experience, we see that BBR generally works well for these applications.
-We have experimented with BBR V3, define by the BBRv2 IETF Draft [cite] and by
-complementary data in a presentation to the IRTF [cite]. However, we see problems
+We have experimented with BBR V3, define by the BBRv2 IETF 
+Draft {{I-D.cardwell-iccrg-bbr-congestion-control}} and by
+complementary data in a presentation to the IRTF {{BBRv3-Slides}}.
+However, we see problems
 in the early stage of the connection, when the path capacity is not yet
 assessed, and during sudden transitions, such as experienced in Wi-Fi networks.
 
