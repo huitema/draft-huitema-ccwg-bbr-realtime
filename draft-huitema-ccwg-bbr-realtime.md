@@ -9,19 +9,19 @@ number:
 date:
 consensus: true
 v: 3
-area: WIT
-workgroup: CCWG
+area: "Web and Internet Transport"
+workgroup: "Congestion Control Working Group"
 keyword:
  - BBR
  - Realtime Communication
  - Media over QUIC
 venue:
-  group: CCWG
-  type: Working Group
-  mail: ccwg@ietf.org
-  arch: https://www.ietf.org/mailman/listinfo/ccwg
-  github: huitema/draft-huitema-ccwg-bbr-realtime
-  latest: https://example.com/LATEST
+  group: "Congestion Control Working Group"
+  type: "Working Group"
+  mail: "ccwg@ietf.org"
+  arch: "https://mailarchive.ietf.org/arch/browse/ccwg/"
+  github: "huitema/draft-huitema-ccwg-bbr-realtime"
+  latest: "https://huitema.github.io/draft-huitema-ccwg-bbr-realtime/draft-huitema-ccwg-bbr-realtime.html"
 
 author:
  -
