@@ -82,7 +82,8 @@ Motivation: avoid building queues, support "layered" media encoding
 or "simulcast" transmission.
 
 Assume that the realtime application carries media over QUIC in a series of
-QUIC streams. Each of these streams is marked with a scheduling priority. For
+QUIC streams {{QUIC-TRANSPORT}}.
+Each of these streams is marked with a scheduling priority. For
 example, in a "simulcast" service, audio packets may be sent as QUIC datagrams
 scheduled at a high priority, then a low definition version of the video
 stream in a QUIC stream marked at the next highest priority, then medium
@@ -107,7 +108,7 @@ to schedule just the right amount of transmission to obtain a good experience
 without creating queues.
 
 In our experience, we see that BBR generally works well for these applications.
-We have experimented with BBR V3, define by the BBRv2 IETF 
+We have experimented with BBR V3, define by the BBRv2 IETF
 Draft {{I-D.cardwell-iccrg-bbr-congestion-control}} and by
 complementary data in a presentation to the IRTF {{BBRv3-Slides}}.
 However, we see problems
