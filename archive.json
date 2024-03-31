@@ -1,0 +1,111 @@
+{
+  "magic": "E!vIA5L86J2I",
+  "timestamp": "2024-03-31T01:01:47.897479+00:00",
+  "repo": "huitema/draft-huitema-ccwg-bbr-realtime",
+  "labels": [
+    {
+      "name": "bug",
+      "description": "Something isn't working",
+      "color": "d73a4a"
+    },
+    {
+      "name": "documentation",
+      "description": "Improvements or additions to documentation",
+      "color": "0075ca"
+    },
+    {
+      "name": "duplicate",
+      "description": "This issue or pull request already exists",
+      "color": "cfd3d7"
+    },
+    {
+      "name": "enhancement",
+      "description": "New feature or request",
+      "color": "a2eeef"
+    },
+    {
+      "name": "good first issue",
+      "description": "Good for newcomers",
+      "color": "7057ff"
+    },
+    {
+      "name": "help wanted",
+      "description": "Extra attention is needed",
+      "color": "008672"
+    },
+    {
+      "name": "invalid",
+      "description": "This doesn't seem right",
+      "color": "e4e669"
+    },
+    {
+      "name": "question",
+      "description": "Further information is requested",
+      "color": "d876e3"
+    },
+    {
+      "name": "wontfix",
+      "description": "This will not be worked on",
+      "color": "ffffff"
+    }
+  ],
+  "issues": [],
+  "pulls": [
+    {
+      "number": 1,
+      "id": "PR_kwDOLnYg685rNb6X",
+      "title": "Starting to fill up the draft.",
+      "url": "https://github.com/huitema/draft-huitema-ccwg-bbr-realtime/pull/1",
+      "state": "MERGED",
+      "author": "huitema",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-03-30T02:24:10Z",
+      "updatedAt": "2024-03-30T02:44:41Z",
+      "baseRepository": "huitema/draft-huitema-ccwg-bbr-realtime",
+      "baseRefName": "main",
+      "baseRefOid": "7fce721e232266ee1df01c81682a97aa89951ebd",
+      "headRepository": "huitema/draft-huitema-ccwg-bbr-realtime",
+      "headRefName": "first-changes",
+      "headRefOid": "0a2109e826bf027b6dcb8a9bf975645b526a500b",
+      "closedAt": "2024-03-30T02:44:41Z",
+      "mergedAt": "2024-03-30T02:44:41Z",
+      "mergedBy": "huitema",
+      "mergeCommit": {
+        "oid": "0a2bf27b4c96d9b605553cebcdceacb404b152ad"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 2,
+      "id": "PR_kwDOLnYg685rNsL4",
+      "title": "Add citations for BBRv3",
+      "url": "https://github.com/huitema/draft-huitema-ccwg-bbr-realtime/pull/2",
+      "state": "MERGED",
+      "author": "huitema",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-03-30T04:47:49Z",
+      "updatedAt": "2024-03-30T04:53:56Z",
+      "baseRepository": "huitema/draft-huitema-ccwg-bbr-realtime",
+      "baseRefName": "main",
+      "baseRefOid": "5686ded02f58dccc7e85ffa9df9d8f3737247aaf",
+      "headRepository": "huitema/draft-huitema-ccwg-bbr-realtime",
+      "headRefName": "add_citations",
+      "headRefOid": "e0fbdf5cf61f43737faa64100fac9827eaedb7ed",
+      "closedAt": "2024-03-30T04:53:56Z",
+      "mergedAt": "2024-03-30T04:53:56Z",
+      "mergedBy": "huitema",
+      "mergeCommit": {
+        "oid": "57594677b515764b7c27cc506ce0129c4c7747a4"
+      },
+      "comments": [],
+      "reviews": []
+    }
+  ]
+}
