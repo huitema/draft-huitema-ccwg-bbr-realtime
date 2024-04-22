@@ -155,7 +155,7 @@ on random events, we may see the 360p video freezing while the 1080p video is st
 
 ## Downward drift
 
-In addition to suspension, we also observe that the congestion control API tends to gradually drop the packing rate over the long run. 
+In addition to suspension, we also observe that the congestion control API tends to gradually drop the packing rate over the long run.
 
 It seems that the application never fully uses the available rate, and that successive queuing events cause the bandwidth to go down progressively. Maybe we have something systematic here? The application always stays within the limits posed by congestion control, which means that the measured rate will always be lower than the allowed rate.. BBR sometimes move to a "probe BW UP" state, but the application does not appear to push much more transmission during that state, so the measured rate does not really increase.
 
