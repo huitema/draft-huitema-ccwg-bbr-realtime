@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-04-21T01:02:07.005214+00:00",
+  "timestamp": "2024-04-23T00:58:30.456099+00:00",
   "repo": "huitema/draft-huitema-ccwg-bbr-realtime",
   "labels": [
     {
@@ -104,6 +104,32 @@
       "mergeCommit": {
         "oid": "57594677b515764b7c27cc506ce0129c4c7747a4"
       },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 3,
+      "id": "PR_kwDOLnYg685tSgzc",
+      "title": "Add text based on discussions on Webex",
+      "url": "https://github.com/huitema/draft-huitema-ccwg-bbr-realtime/pull/3",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-04-22T00:59:51Z",
+      "updatedAt": "2024-04-22T01:02:22Z",
+      "baseRepository": "huitema/draft-huitema-ccwg-bbr-realtime",
+      "baseRefName": "main",
+      "baseRefOid": "57594677b515764b7c27cc506ce0129c4c7747a4",
+      "headRepository": "huitema/draft-huitema-ccwg-bbr-realtime",
+      "headRefName": "bbr-changes",
+      "headRefOid": "e609026dba929bf4c67c88e7111fa493b7b5515e",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
       "comments": [],
       "reviews": []
     }
