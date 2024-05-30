@@ -3,7 +3,7 @@ title: "BBR Improvements for Real-Time connections"
 abbrev: "BBR-Realtime"
 category: info
 
-docname: draft-huitema-ccwg-bbr-real-time-latest
+docname: draft-huitema-ccwg-bbr-realtime-latest
 submissiontype: IETF
 number:
 date:
@@ -122,7 +122,7 @@ followed by long periods of relatively low bandwidth demand, which the congestio
 control algorithm may treat as "application limited". Of course, if the bandwidth
 is too low, even the differentially encode frame may create some congestion. In the
 simulcast structure, that would react to that by delaying the higher definition
-video channels. 
+video channels.
 
 In our experience, we see that BBR generally works well for these applications.
 We have experimented with BBR V3, define by the BBRv2 IETF
