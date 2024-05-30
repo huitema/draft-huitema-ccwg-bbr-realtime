@@ -1,28 +1,19 @@
 ---
-title: "BBR Improvements for Realtime connections"
+title: "BBR Improvements for Real-Time connections"
 abbrev: "BBR-Realtime"
 category: info
 
-docname: draft-huitema-ccwg-bbr-realtime-latest
+docname: draft-huitema-ccwg-bbr-real-time-latest
 submissiontype: IETF
 number:
 date:
 consensus: true
-v: 3
 ipr: trust200902
 area: "Web and Internet Transport"
-workgroup: "Congestion Control Working Group"
 keyword:
  - BBR
  - Realtime Communication
  - Media over QUIC
-venue:
-  group: "Congestion Control Working Group"
-  type: "Working Group"
-  mail: "ccwg@ietf.org"
-  arch: "https://mailarchive.ietf.org/arch/browse/ccwg/"
-  github: "huitema/draft-huitema-ccwg-bbr-realtime"
-  latest: "https://huitema.github.io/draft-huitema-ccwg-bbr-realtime/draft-huitema-ccwg-bbr-realtime.html"
 
 author:
  -
@@ -71,41 +62,67 @@ informative:
 
 --- abstract
 
-BBR is great, BBR for realtime could be better. here is how.
+We are studying the transmission of real-time Media over QUIC. There are
+two priorities: maintaining low transmission delays by avoid queues, and
+using the available network capacity to provide the best possible
+experience. We found through experiments that while the BBR algorithm
+generally allow us to correctly and timely assess network capacity,
+we still see "glitches" in specific conditions, in particular when
+using wireless networks. We analyze these issues and
+propose small changes in the BBR algorithm that could improve the quality
+of experience delivered by the real-time media application.
 
 
 --- middle
 
 # Introduction
 
-Motivation: avoid building queues, support "layered" media encoding
-or "simulcast" transmission.
+When designing real-time communication applications over QUIC, we want to
+maintaining low transmission delays but provide the best possible
+experience that the current transmission capacity allows.
+We found through experiments that while the BBR algorithm
+generally allow us to correctly and timely assess network capacity,
+we still see "glitches" in specific conditions, during which the
+BBR algorithm either allows the building of unnecessary queues or
+unnecessarily restrict the transmission rate of the application.
 
-Assume that the realtime application carries media over QUIC in a series of
-QUIC streams {{RFC9000}}.
-Each of these streams is marked with a scheduling priority. For
-example, in a "simulcast" service, audio packets may be sent as QUIC datagrams
+The real-time application carries media over QUIC in a series of
+QUIC streams {{RFC9000}}. Each of these streams is marked with a scheduling priority.
+For example, in a "simulcast" service, audio packets may be sent as QUIC datagrams
 scheduled at a high priority, then a low definition version of the video
 stream in a QUIC stream marked at the next highest priority, then medium
 definition video in another stream, then high definition video in the lowest
-priority stream. At any give time, the sender could schedule data according
+priority stream. At any given time, the sender would schedule data according
 to the connection's capacity as evaluated by the congestion control algorithm.
 If the path has a high capacity the receiver will receive all QUIC streams and
 enjoy a high definition experience. If the capacity is lower, the higher
 definition streams will be delayed but the receiver will reliably obtain
 the medium or low definition version of the media.
 
-This realtime retransmission strategy relies on timely assessment of the
+This real-time retransmission strategy relies on timely assessment of the
 path capacity by the congestion control algorithm. If the assessment is delayed,
 the scheduling algorithm will make wrong decisions, such as wrongly believing that
 the path does not have the capacity to send high definition media, or in contrast
 sending high definition media and causing queues and maybe packet losses
 because the lowering of the path capacity has not yet been detected.
 
-Other realtime applications may use different categories of traffic than low
-or high definition video, but they will follow the genral principle of trying
+Other real-time applications may use different categories of traffic than low
+or high definition video, but they will follow the general principle of trying
 to schedule just the right amount of transmission to obtain a good experience
 without creating queues.
+
+Real-time transmissions have a variable data rate. Different media codec have
+different behavior, but a common pattern is to periodically send "fully encoded"
+frames, followed by series of "differentially encoded" frame. The fully encoded
+frames serve as possible synchronization point at which a recipient can start
+rendering data, while the differentially encoded frames can only be processed
+if the previous frames have been received. This structure create periodic peaks
+of traffic, during which the connection might experience some for of congestion,
+followed by long periods of relatively low bandwidth demand, which the congestion
+control algorithm may treat as "application limited". Of course, if the bandwidth
+is too low, even the differentially encode frame may create some congestion. In the
+simulcast structure, that would react to that by delaying the higher definition
+video channels. 
 
 In our experience, we see that BBR generally works well for these applications.
 We have experimented with BBR V3, define by the BBRv2 IETF
@@ -114,6 +131,8 @@ complementary data in a presentation to the IRTF {{BBRv3-Slides}}.
 However, we see problems
 in the early stage of the connection, when the path capacity is not yet
 assessed, and during sudden transitions, such as experienced in Wi-Fi networks.
+There are also details of the algorithm that work poorly when the traffic
+alternate between periodic congestion and application limited periods.
 
 
 # Conventions and Definitions
@@ -121,6 +140,15 @@ assessed, and during sudden transitions, such as experienced in Wi-Fi networks.
 {::boilerplate bcp14-tagged}
 
 # Problem statement
+
+With BBRv3, we see less than ideal "real-time" performance during the initial phase
+of the connection, during Wi-Fi suspension events, or when the quality of the
+wireless transmission changes suddenly. We also see anomalous behavior that may
+be tied to the "application limited" nature of the application.
+
+These issues are developed in the following sections.
+
+## Extra delays during initial startup
 
 ## Wi-Fi suspension
 
@@ -169,8 +197,6 @@ When BBR probes for more data, the high speed stream may have already been reset
 bandwidth will not really "push up" the data rate.
 
 ## Lingering in Probe BW UP state
-
-## Extra delays during initial startup
 
 # Proposed improvements
 
