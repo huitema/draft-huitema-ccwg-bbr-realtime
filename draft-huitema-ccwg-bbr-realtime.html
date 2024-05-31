@@ -4,11 +4,19 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>BBR Improvements for Realtime connections</title>
+<title>BBR Improvements for Real-Time connections</title>
 <meta content="Christian Huitema" name="author">
-<meta content="
-       BBR is great, BBR for realtime could be better. here is how. 
-    " name="description">
+<meta content='
+       We are studying the transmission of real-time Media over QUIC. There are
+two priorities: maintaining low transmission delays by avoid queues, and
+using the available network capacity to provide the best possible
+experience. We found through experiments that while the BBR algorithm
+generally allow us to correctly and timely assess network capacity,
+we still see "glitches" in specific conditions, in particular when
+using wireless networks. We analyze these issues and
+propose small changes in the BBR algorithm that could improve the quality
+of experience delivered by the real-time media application. 
+    ' name="description">
 <meta content="xml2rfc 3.21.0" name="generator">
 <meta content="BBR" name="keyword">
 <meta content="Realtime Communication" name="keyword">
@@ -1031,7 +1039,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Huitema</td>
-<td class="center">Expires 30 November 2024</td>
+<td class="center">Expires 2 December 2024</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1039,17 +1047,17 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <div id="internal-metadata" class="document-information">
 <dl id="identifiers">
 <dt class="label-workgroup">Workgroup:</dt>
-<dd class="workgroup">Congestion Control Working Group</dd>
+<dd class="workgroup">Network Working Group</dd>
 <dt class="label-internet-draft">Internet-Draft:</dt>
 <dd class="internet-draft">draft-huitema-ccwg-bbr-realtime-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2024-05-29" class="published">29 May 2024</time>
+<time datetime="2024-05-31" class="published">31 May 2024</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2024-11-30">30 November 2024</time></dd>
+<dd class="expires"><time datetime="2024-12-02">2 December 2024</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1059,26 +1067,18 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </dd>
 </dl>
 </div>
-<h1 id="title">BBR Improvements for Realtime connections</h1>
+<h1 id="title">BBR Improvements for Real-Time connections</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">BBR is great, BBR for realtime could be better. here is how.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-</section>
-<section class="note rfcEditorRemove" id="section-note.1">
-      <h2 id="name-about-this-document">
-<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
-      </h2>
-<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
-<p id="section-note.1-2">
-        The latest revision of this draft can be found at <span><a href="https://huitema.github.io/draft-huitema-ccwg-bbr-realtime/draft-huitema-ccwg-bbr-realtime.html">https://huitema.github.io/draft-huitema-ccwg-bbr-realtime/draft-huitema-ccwg-bbr-realtime.html</a></span>.
-        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-huitema-ccwg-bbr-realtime/">https://datatracker.ietf.org/doc/draft-huitema-ccwg-bbr-realtime/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
-<p id="section-note.1-3">
-        Discussion of this document takes place on the
-        Congestion Control Working Group Working Group mailing list (<span><a href="mailto:ccwg@ietf.org">mailto:ccwg@ietf.org</a></span>),
-        which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/ccwg/">https://mailarchive.ietf.org/arch/browse/ccwg/</a></span>.
-        Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/ccwg/">https://www.ietf.org/mailman/listinfo/ccwg/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
-<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
-        <span><a href="https://github.com/huitema/draft-huitema-ccwg-bbr-realtime">https://github.com/huitema/draft-huitema-ccwg-bbr-realtime</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">We are studying the transmission of real-time Media over QUIC. There are
+two priorities: maintaining low transmission delays by avoid queues, and
+using the available network capacity to provide the best possible
+experience. We found through experiments that while the BBR algorithm
+generally allow us to correctly and timely assess network capacity,
+we still see "glitches" in specific conditions, in particular when
+using wireless networks. We analyze these issues and
+propose small changes in the BBR algorithm that could improve the quality
+of experience delivered by the real-time media application.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <div id="status-of-memo">
 <section id="section-boilerplate.1">
@@ -1099,7 +1099,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 30 November 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 2 December 2024.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1138,19 +1138,19 @@ svg :is([fill="white"], [fill^="#fff"]) {
             <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-problem-statement" class="internal xref">Problem statement</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
-                <p id="section-toc.1-1.3.2.1.1" class="keepWithNext"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-wi-fi-suspension" class="internal xref">Wi-Fi suspension</a></p>
+                <p id="section-toc.1-1.3.2.1.1" class="keepWithNext"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-extra-delays-during-initial" class="internal xref">Extra delays during initial startup</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
-                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-bad-wifi-spot" class="internal xref">Bad Wifi Spot</a></p>
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-wi-fi-suspension" class="internal xref">Wi-Fi suspension</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
-                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-downward-drift" class="internal xref">Downward drift</a></p>
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-bad-wifi-spot" class="internal xref">Bad Wifi Spot</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4">
-                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-lingering-in-probe-bw-up-st" class="internal xref">Lingering in Probe BW UP state</a></p>
+                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-downward-drift" class="internal xref">Downward drift</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.5">
-                <p id="section-toc.1-1.3.2.5.1"><a href="#section-3.5" class="auto internal xref">3.5</a>.  <a href="#name-extra-delays-during-initial" class="internal xref">Extra delays during initial startup</a></p>
+                <p id="section-toc.1-1.3.2.5.1"><a href="#section-3.5" class="auto internal xref">3.5</a>.  <a href="#name-lingering-in-probe-bw-up-st" class="internal xref">Lingering in Probe BW UP state</a></p>
 </li>
             </ul>
 </li>
@@ -1189,38 +1189,57 @@ svg :is([fill="white"], [fill^="#fff"]) {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">Motivation: avoid building queues, support "layered" media encoding
-or "simulcast" transmission.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">Assume that the realtime application carries media over QUIC in a series of
-QUIC streams <span>[<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>.
-Each of these streams is marked with a scheduling priority. For
-example, in a "simulcast" service, audio packets may be sent as QUIC datagrams
+<p id="section-1-1">When designing real-time communication applications over QUIC, we want to
+maintaining low transmission delays but provide the best possible
+experience that the current transmission capacity allows.
+We found through experiments that while the BBR algorithm
+generally allow us to correctly and timely assess network capacity,
+we still see "glitches" in specific conditions, during which the
+BBR algorithm either allows the building of unnecessary queues or
+unnecessarily restrict the transmission rate of the application.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">The real-time application carries media over QUIC in a series of
+QUIC streams <span>[<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>. Each of these streams is marked with a scheduling priority.
+For example, in a "simulcast" service, audio packets may be sent as QUIC datagrams
 scheduled at a high priority, then a low definition version of the video
 stream in a QUIC stream marked at the next highest priority, then medium
 definition video in another stream, then high definition video in the lowest
-priority stream. At any give time, the sender could schedule data according
+priority stream. At any given time, the sender would schedule data according
 to the connection's capacity as evaluated by the congestion control algorithm.
 If the path has a high capacity the receiver will receive all QUIC streams and
 enjoy a high definition experience. If the capacity is lower, the higher
 definition streams will be delayed but the receiver will reliably obtain
 the medium or low definition version of the media.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">This realtime retransmission strategy relies on timely assessment of the
+<p id="section-1-3">This real-time retransmission strategy relies on timely assessment of the
 path capacity by the congestion control algorithm. If the assessment is delayed,
 the scheduling algorithm will make wrong decisions, such as wrongly believing that
 the path does not have the capacity to send high definition media, or in contrast
 sending high definition media and causing queues and maybe packet losses
 because the lowering of the path capacity has not yet been detected.<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4">Other realtime applications may use different categories of traffic than low
-or high definition video, but they will follow the genral principle of trying
+<p id="section-1-4">Other real-time applications may use different categories of traffic than low
+or high definition video, but they will follow the general principle of trying
 to schedule just the right amount of transmission to obtain a good experience
 without creating queues.<a href="#section-1-4" class="pilcrow">¶</a></p>
-<p id="section-1-5">In our experience, we see that BBR generally works well for these applications.
+<p id="section-1-5">Real-time transmissions have a variable data rate. Different media codec have
+different behavior, but a common pattern is to periodically send "fully encoded"
+frames, followed by series of "differentially encoded" frame. The fully encoded
+frames serve as possible synchronization point at which a recipient can start
+rendering data, while the differentially encoded frames can only be processed
+if the previous frames have been received. This structure create periodic peaks
+of traffic, during which the connection might experience some for of congestion,
+followed by long periods of relatively low bandwidth demand, which the congestion
+control algorithm may treat as "application limited". Of course, if the bandwidth
+is too low, even the differentially encode frame may create some congestion. In the
+simulcast structure, that would react to that by delaying the higher definition
+video channels.<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1-6">In our experience, we see that BBR generally works well for these applications.
 We have experimented with BBR V3, define by the BBRv2 IETF
 Draft <span>[<a href="#I-D.cardwell-iccrg-bbr-congestion-control" class="cite xref">I-D.cardwell-iccrg-bbr-congestion-control</a>]</span> and by
 complementary data in a presentation to the IRTF <span>[<a href="#BBRv3-Slides" class="cite xref">BBRv3-Slides</a>]</span>.
 However, we see problems
 in the early stage of the connection, when the path capacity is not yet
-assessed, and during sudden transitions, such as experienced in Wi-Fi networks.<a href="#section-1-5" class="pilcrow">¶</a></p>
+assessed, and during sudden transitions, such as experienced in Wi-Fi networks.
+There are also details of the algorithm that work poorly when the traffic
+alternate between periodic congestion and application limited periods.<a href="#section-1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-definitions">
@@ -1239,81 +1258,86 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       <h2 id="name-problem-statement">
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-problem-statement" class="section-name selfRef">Problem statement</a>
       </h2>
-<div id="wi-fi-suspension">
+<p id="section-3-1">With BBRv3, we see less than ideal "real-time" performance during the initial phase
+of the connection, during Wi-Fi suspension events, or when the quality of the
+wireless transmission changes suddenly. We also see anomalous behavior that may
+be tied to the "application limited" nature of the application.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">These issues are developed in the following sections.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<div id="extra-delays-during-initial-startup">
 <section id="section-3.1">
+        <h3 id="name-extra-delays-during-initial">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-extra-delays-during-initial" class="section-name selfRef">Extra delays during initial startup</a>
+      </h3>
+</section>
+</div>
+<div id="wi-fi-suspension">
+<section id="section-3.2">
         <h3 id="name-wi-fi-suspension">
-<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-wi-fi-suspension" class="section-name selfRef">Wi-Fi suspension</a>
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-wi-fi-suspension" class="section-name selfRef">Wi-Fi suspension</a>
         </h3>
-<p id="section-3.1-1">The current behavior is that the sender, using BBR, detects the Wi-Fi suspension about 1 RTT after it happens, at which point it stops polling for new data. Then, maybe 60 to 100ms later depending on conditions, it starts receiving ACK from the peer that were queued at the router during the suspension. Picoquic and BBR refresh the congestion parameters, and start polling the application. The queued data will be sent in order of priority, ending with the 1080p frames.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.1-2">We can describe this process as a succession of phases:<a href="#section-3.1-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-1">The current behavior is that the sender, using BBR, detects the Wi-Fi suspension about 1 RTT after it happens, at which point it stops polling for new data. Then, maybe 60 to 100ms later depending on conditions, it starts receiving ACK from the peer that were queued at the router during the suspension. Picoquic and BBR refresh the congestion parameters, and start polling the application. The queued data will be sent in order of priority, ending with the 1080p frames.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-2">We can describe this process as a succession of phases:<a href="#section-3.2-2" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.1-3.1">
-            <p id="section-3.1-3.1.1">Normal transmission, at the application "nominal" rate when all quality
-levels are sent, with no queue.<a href="#section-3.1-3.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.2-3.1">
+            <p id="section-3.2-3.1.1">Normal transmission, at the application "nominal" rate when all quality
+levels are sent, with no queue.<a href="#section-3.2-3.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.1-3.2">
-            <p id="section-3.1-3.2.1">Undetected suspension, during which queues are building up with a mix of
-data of various priority levels<a href="#section-3.1-3.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-3.2-3.2">
+            <p id="section-3.2-3.2.1">Undetected suspension, during which queues are building up with a mix of
+data of various priority levels<a href="#section-3.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.1-3.3">
-            <p id="section-3.1-3.3.1">Detected suspension, during which no more data is sent<a href="#section-3.1-3.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-3.2-3.3">
+            <p id="section-3.2-3.3.1">Detected suspension, during which no more data is sent<a href="#section-3.2-3.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.1-3.4">
-            <p id="section-3.1-3.4.1">Resumption, during which the sender using BBR progressively ramps up the
-sending rate and dequeues the frames stuck in applcation queues, in order of priority<a href="#section-3.1-3.4.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-3.2-3.4">
+            <p id="section-3.2-3.4.1">Resumption, during which the sender using BBR progressively ramps up the
+sending rate and dequeues the frames stuck in applcation queues, in order of priority<a href="#section-3.2-3.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.1-3.5">
-            <p id="section-3.1-3.5.1">and back to normal state, when the application queues are emptied rapidly.<a href="#section-3.1-3.5.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-3.2-3.5">
+            <p id="section-3.2-3.5.1">and back to normal state, when the application queues are emptied rapidly.<a href="#section-3.2-3.5.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-3.1-4">The queuing happens in the "undetected suspension" state, which currently lasts one PTO,
+<p id="section-3.2-4">The queuing happens in the "undetected suspension" state, which currently lasts one PTO,
 i.e., a bit more than one RTT. So we get one RTT worth of audio, 360p, 720p and 1080p
 frames in the pipe-line, typically queued in front of the Wi-Fi driver. These frames
 will be delivered by the network before any other frame sent during the "resumption".
-We will observe some kind of "priority inversion".<a href="#section-3.1-4" class="pilcrow">¶</a></p>
-<p id="section-3.1-5">If new suspension happens shortly after the first one interval, it may catch the system
+We will observe some kind of "priority inversion".<a href="#section-3.2-4" class="pilcrow">¶</a></p>
+<p id="section-3.2-5">If new suspension happens shortly after the first one interval, it may catch the system
 during the "resumption" state. During that state, the sender may have ramped up the data
 rate to match the underlying network rate (maybe 100 Mbps) and empty the application
 queues quickly. The transmission rate may be several times the normal rate. The amount
 of frames queued in front of the Wi-Fi driver will be several times more than during
 the first suspension. The "priority inversion" effect will be much larger. Depending
-on random events, we may see the 360p video freezing while the 1080p video is still animating.<a href="#section-3.1-5" class="pilcrow">¶</a></p>
+on random events, we may see the 360p video freezing while the 1080p video is still animating.<a href="#section-3.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="bad-wifi-spot">
-<section id="section-3.2">
+<section id="section-3.3">
         <h3 id="name-bad-wifi-spot">
-<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-bad-wifi-spot" class="section-name selfRef">Bad Wifi Spot</a>
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-bad-wifi-spot" class="section-name selfRef">Bad Wifi Spot</a>
       </h3>
 </section>
 </div>
 <div id="downward-drift">
-<section id="section-3.3">
+<section id="section-3.4">
         <h3 id="name-downward-drift">
-<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-downward-drift" class="section-name selfRef">Downward drift</a>
+<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-downward-drift" class="section-name selfRef">Downward drift</a>
         </h3>
-<p id="section-3.3-1">In addition to suspension, we also observe that the congestion control API tends to gradually drop the packing rate over the long run.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
-<p id="section-3.3-2">It seems that the application never fully uses the available rate, and that successive queuing events cause the bandwidth to go down progressively. Maybe we have something systematic here? The application always stays within the limits posed by congestion control, which means that the measured rate will always be lower than the allowed rate.. BBR sometimes move to a "probe BW UP" state, but the application does not appear to push much more transmission during that state, so the measured rate does not really increase.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
-<p id="section-3.3-3">The hypothesis is that the application never sends faster than pacing permits, so there is some kind of negative feedback loop.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
-<p id="section-3.3-4">The downward spiral may be compounded by the practice of resetting streams that have fallen behind.
+<p id="section-3.4-1">In addition to suspension, we also observe that the congestion control API tends to gradually drop the packing rate over the long run.<a href="#section-3.4-1" class="pilcrow">¶</a></p>
+<p id="section-3.4-2">It seems that the application never fully uses the available rate, and that successive queuing events cause the bandwidth to go down progressively. Maybe we have something systematic here? The application always stays within the limits posed by congestion control, which means that the measured rate will always be lower than the allowed rate.. BBR sometimes move to a "probe BW UP" state, but the application does not appear to push much more transmission during that state, so the measured rate does not really increase.<a href="#section-3.4-2" class="pilcrow">¶</a></p>
+<p id="section-3.4-3">The hypothesis is that the application never sends faster than pacing permits, so there is some kind of negative feedback loop.<a href="#section-3.4-3" class="pilcrow">¶</a></p>
+<p id="section-3.4-4">The downward spiral may be compounded by the practice of resetting streams that have fallen behind.
 This is line with discussions in MoQ. A new stream will be restarted for the next block of frames,
 starting with the next I-Frame. The application will try to send more data at that point, but the
 probing rate will stay low until until the next "probe BW UP" phase, which may be a few seconds away.
 When BBR probes for more data, the high speed stream may have already been reset, and the offered
-bandwidth will not really "push up" the data rate.<a href="#section-3.3-4" class="pilcrow">¶</a></p>
+bandwidth will not really "push up" the data rate.<a href="#section-3.4-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="lingering-in-probe-bw-up-state">
-<section id="section-3.4">
-        <h3 id="name-lingering-in-probe-bw-up-st">
-<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-lingering-in-probe-bw-up-st" class="section-name selfRef">Lingering in Probe BW UP state</a>
-      </h3>
-</section>
-</div>
-<div id="extra-delays-during-initial-startup">
 <section id="section-3.5">
-        <h3 id="name-extra-delays-during-initial">
-<a href="#section-3.5" class="section-number selfRef">3.5. </a><a href="#name-extra-delays-during-initial" class="section-name selfRef">Extra delays during initial startup</a>
+        <h3 id="name-lingering-in-probe-bw-up-st">
+<a href="#section-3.5" class="section-number selfRef">3.5. </a><a href="#name-lingering-in-probe-bw-up-st" class="section-name selfRef">Lingering in Probe BW UP state</a>
       </h3>
 </section>
 </div>
@@ -1377,11 +1401,11 @@ which would limit the amount of data queued in front of the Wi-Fi drivers, and t
 <dl class="references">
 <dt id="RFC2119">[RFC2119]</dt>
         <dd>
-<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc2119">https://www.rfc-editor.org/info/rfc2119</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8174">[RFC8174]</dt>
       <dd>
-<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8174">https://www.rfc-editor.org/info/rfc8174</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -1392,17 +1416,17 @@ which would limit the amount of data queued in front of the Wi-Fi drivers, and t
 <a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
-<dt id="BBRv3-Slides">[BBRv3-Slides]</dt>
+<dt id="RFC9000">[RFC9000]</dt>
         <dd>
-<span class="refAuthor">Cardwell, N.</span>, <span class="refAuthor">Cheng, Y.</span>, <span class="refAuthor">Yang, K.</span>, <span class="refAuthor">Morley, D.</span>, <span class="refAuthor">Hassas Yeganeh, S.</span>, <span class="refAuthor">Jha, P.</span>, <span class="refAuthor">Seung, Y.</span>, <span class="refAuthor">Jacobson, V.</span>, <span class="refAuthor">Swett, I.</span>, <span class="refAuthor">Wu, B.</span>, and <span class="refAuthor">V. Vasiliev</span>, <span class="refTitle">"BBRv3: Algorithm Bug Fixes and Public Internet Deployment"</span>, <span class="seriesInfo">Materials for IETF 117 Meeting </span>, <time datetime="2023-07" class="refDate">July 2023</time>, <span>&lt;<a href="https://datatracker.ietf.org/meeting/117/materials/slides-117-ccwg-bbrv3-algorithm-bug-fixes-and-public-internet-deployment-00">https://datatracker.ietf.org/meeting/117/materials/slides-117-ccwg-bbrv3-algorithm-bug-fixes-and-public-internet-deployment-00</a>&gt;</span>. </dd>
+<span class="refAuthor">Iyengar, J., Ed.</span> and <span class="refAuthor">M. Thomson, Ed.</span>, <span class="refTitle">"QUIC: A UDP-Based Multiplexed and Secure Transport"</span>, <span class="seriesInfo">RFC 9000</span>, <span class="seriesInfo">DOI 10.17487/RFC9000</span>, <time datetime="2021-05" class="refDate">May 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9000">https://www.rfc-editor.org/info/rfc9000</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.cardwell-iccrg-bbr-congestion-control">[I-D.cardwell-iccrg-bbr-congestion-control]</dt>
         <dd>
 <span class="refAuthor">Cardwell, N.</span>, <span class="refAuthor">Cheng, Y.</span>, <span class="refAuthor">Yeganeh, S. H.</span>, <span class="refAuthor">Swett, I.</span>, and <span class="refAuthor">V. Jacobson</span>, <span class="refTitle">"BBR Congestion Control"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-cardwell-iccrg-bbr-congestion-control-02</span>, <time datetime="2022-03-07" class="refDate">7 March 2022</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-cardwell-iccrg-bbr-congestion-control-02">https://datatracker.ietf.org/doc/html/draft-cardwell-iccrg-bbr-congestion-control-02</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC9000">[RFC9000]</dt>
+<dt id="BBRv3-Slides">[BBRv3-Slides]</dt>
       <dd>
-<span class="refAuthor">Iyengar, J., Ed.</span> and <span class="refAuthor">M. Thomson, Ed.</span>, <span class="refTitle">"QUIC: A UDP-Based Multiplexed and Secure Transport"</span>, <span class="seriesInfo">RFC 9000</span>, <span class="seriesInfo">DOI 10.17487/RFC9000</span>, <time datetime="2021-05" class="refDate">May 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9000">https://www.rfc-editor.org/rfc/rfc9000</a>&gt;</span>. </dd>
+<span class="refAuthor">Cardwell, N.</span>, <span class="refAuthor">Cheng, Y.</span>, <span class="refAuthor">Yang, K.</span>, <span class="refAuthor">Morley, D.</span>, <span class="refAuthor">Hassas Yeganeh, S.</span>, <span class="refAuthor">Jha, P.</span>, <span class="refAuthor">Seung, Y.</span>, <span class="refAuthor">Jacobson, V.</span>, <span class="refAuthor">Swett, I.</span>, <span class="refAuthor">Wu, B.</span>, and <span class="refAuthor">V. Vasiliev</span>, <span class="refTitle">"BBRv3: Algorithm Bug Fixes and Public Internet Deployment"</span>, <span class="seriesInfo">Materials for IETF 117 Meeting </span>, <time datetime="2023-07" class="refDate">July 2023</time>, <span>&lt;<a href="https://datatracker.ietf.org/meeting/117/materials/slides-117-ccwg-bbrv3-algorithm-bug-fixes-and-public-internet-deployment-00">https://datatracker.ietf.org/meeting/117/materials/slides-117-ccwg-bbrv3-algorithm-bug-fixes-and-public-internet-deployment-00</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>

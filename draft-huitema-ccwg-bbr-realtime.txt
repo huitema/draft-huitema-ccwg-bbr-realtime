@@ -2,36 +2,26 @@
 
 
 
-Congestion Control Working Group                              C. Huitema
+Network Working Group                                         C. Huitema
 Internet-Draft                                      Private Octopus Inc.
-Intended status: Informational                               29 May 2024
-Expires: 30 November 2024
+Intended status: Informational                               31 May 2024
+Expires: 2 December 2024
 
 
-               BBR Improvements for Realtime connections
+               BBR Improvements for Real-Time connections
                  draft-huitema-ccwg-bbr-realtime-latest
 
 Abstract
 
-   BBR is great, BBR for realtime could be better. here is how.
-
-About This Document
-
-   This note is to be removed before publishing as an RFC.
-
-   The latest revision of this draft can be found at
-   https://huitema.github.io/draft-huitema-ccwg-bbr-realtime/draft-
-   huitema-ccwg-bbr-realtime.html.  Status information for this document
-   may be found at https://datatracker.ietf.org/doc/draft-huitema-ccwg-
-   bbr-realtime/.
-
-   Discussion of this document takes place on the Congestion Control
-   Working Group Working Group mailing list (mailto:ccwg@ietf.org),
-   which is archived at https://mailarchive.ietf.org/arch/browse/ccwg/.
-   Subscribe at https://www.ietf.org/mailman/listinfo/ccwg/.
-
-   Source for this draft and an issue tracker can be found at
-   https://github.com/huitema/draft-huitema-ccwg-bbr-realtime.
+   We are studying the transmission of real-time Media over QUIC.  There
+   are two priorities: maintaining low transmission delays by avoid
+   queues, and using the available network capacity to provide the best
+   possible experience.  We found through experiments that while the BBR
+   algorithm generally allow us to correctly and timely assess network
+   capacity, we still see "glitches" in specific conditions, in
+   particular when using wireless networks.  We analyze these issues and
+   propose small changes in the BBR algorithm that could improve the
+   quality of experience delivered by the real-time media application.
 
 Status of This Memo
 
@@ -48,7 +38,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 30 November 2024.
+   This Internet-Draft will expire on 2 December 2024.
 
 Copyright Notice
 
@@ -69,11 +59,11 @@ Table of Contents
    1.  Introduction
    2.  Conventions and Definitions
    3.  Problem statement
-     3.1.  Wi-Fi suspension
-     3.2.  Bad Wifi Spot
-     3.3.  Downward drift
-     3.4.  Lingering in Probe BW UP state
-     3.5.  Extra delays during initial startup
+     3.1.  Extra delays during initial startup
+     3.2.  Wi-Fi suspension
+     3.3.  Bad Wifi Spot
+     3.4.  Downward drift
+     3.5.  Lingering in Probe BW UP state
    4.  Proposed improvements
    5.  Security Considerations
    6.  IANA Considerations
@@ -85,25 +75,31 @@ Table of Contents
 
 1.  Introduction
 
-   Motivation: avoid building queues, support "layered" media encoding
-   or "simulcast" transmission.
+   When designing real-time communication applications over QUIC, we
+   want to maintaining low transmission delays but provide the best
+   possible experience that the current transmission capacity allows.
+   We found through experiments that while the BBR algorithm generally
+   allow us to correctly and timely assess network capacity, we still
+   see "glitches" in specific conditions, during which the BBR algorithm
+   either allows the building of unnecessary queues or unnecessarily
+   restrict the transmission rate of the application.
 
-   Assume that the realtime application carries media over QUIC in a
-   series of QUIC streams [RFC9000].  Each of these streams is marked
-   with a scheduling priority.  For example, in a "simulcast" service,
-   audio packets may be sent as QUIC datagrams scheduled at a high
-   priority, then a low definition version of the video stream in a QUIC
-   stream marked at the next highest priority, then medium definition
-   video in another stream, then high definition video in the lowest
-   priority stream.  At any give time, the sender could schedule data
-   according to the connection's capacity as evaluated by the congestion
-   control algorithm.  If the path has a high capacity the receiver will
-   receive all QUIC streams and enjoy a high definition experience.  If
-   the capacity is lower, the higher definition streams will be delayed
-   but the receiver will reliably obtain the medium or low definition
+   The real-time application carries media over QUIC in a series of QUIC
+   streams [RFC9000].  Each of these streams is marked with a scheduling
+   priority.  For example, in a "simulcast" service, audio packets may
+   be sent as QUIC datagrams scheduled at a high priority, then a low
+   definition version of the video stream in a QUIC stream marked at the
+   next highest priority, then medium definition video in another
+   stream, then high definition video in the lowest priority stream.  At
+   any given time, the sender would schedule data according to the
+   connection's capacity as evaluated by the congestion control
+   algorithm.  If the path has a high capacity the receiver will receive
+   all QUIC streams and enjoy a high definition experience.  If the
+   capacity is lower, the higher definition streams will be delayed but
+   the receiver will reliably obtain the medium or low definition
    version of the media.
 
-   This realtime retransmission strategy relies on timely assessment of
+   This real-time retransmission strategy relies on timely assessment of
    the path capacity by the congestion control algorithm.  If the
    assessment is delayed, the scheduling algorithm will make wrong
    decisions, such as wrongly believing that the path does not have the
@@ -111,10 +107,25 @@ Table of Contents
    definition media and causing queues and maybe packet losses because
    the lowering of the path capacity has not yet been detected.
 
-   Other realtime applications may use different categories of traffic
-   than low or high definition video, but they will follow the genral
+   Other real-time applications may use different categories of traffic
+   than low or high definition video, but they will follow the general
    principle of trying to schedule just the right amount of transmission
    to obtain a good experience without creating queues.
+
+   Real-time transmissions have a variable data rate.  Different media
+   codec have different behavior, but a common pattern is to
+   periodically send "fully encoded" frames, followed by series of
+   "differentially encoded" frame.  The fully encoded frames serve as
+   possible synchronization point at which a recipient can start
+   rendering data, while the differentially encoded frames can only be
+   processed if the previous frames have been received.  This structure
+   create periodic peaks of traffic, during which the connection might
+   experience some for of congestion, followed by long periods of
+   relatively low bandwidth demand, which the congestion control
+   algorithm may treat as "application limited".  Of course, if the
+   bandwidth is too low, even the differentially encode frame may create
+   some congestion.  In the simulcast structure, that would react to
+   that by delaying the higher definition video channels.
 
    In our experience, we see that BBR generally works well for these
    applications.  We have experimented with BBR V3, define by the BBRv2
@@ -122,7 +133,9 @@ Table of Contents
    complementary data in a presentation to the IRTF [BBRv3-Slides].
    However, we see problems in the early stage of the connection, when
    the path capacity is not yet assessed, and during sudden transitions,
-   such as experienced in Wi-Fi networks.
+   such as experienced in Wi-Fi networks.  There are also details of the
+   algorithm that work poorly when the traffic alternate between
+   periodic congestion and application limited periods.
 
 2.  Conventions and Definitions
 
@@ -134,7 +147,17 @@ Table of Contents
 
 3.  Problem statement
 
-3.1.  Wi-Fi suspension
+   With BBRv3, we see less than ideal "real-time" performance during the
+   initial phase of the connection, during Wi-Fi suspension events, or
+   when the quality of the wireless transmission changes suddenly.  We
+   also see anomalous behavior that may be tied to the "application
+   limited" nature of the application.
+
+   These issues are developed in the following sections.
+
+3.1.  Extra delays during initial startup
+
+3.2.  Wi-Fi suspension
 
    The current behavior is that the sender, using BBR, detects the Wi-Fi
    suspension about 1 RTT after it happens, at which point it stops
@@ -179,9 +202,9 @@ Table of Contents
    random events, we may see the 360p video freezing while the 1080p
    video is still animating.
 
-3.2.  Bad Wifi Spot
+3.3.  Bad Wifi Spot
 
-3.3.  Downward drift
+3.4.  Downward drift
 
    In addition to suspension, we also observe that the congestion
    control API tends to gradually drop the packing rate over the long
@@ -209,9 +232,7 @@ Table of Contents
    been reset, and the offered bandwidth will not really "push up" the
    data rate.
 
-3.4.  Lingering in Probe BW UP state
-
-3.5.  Extra delays during initial startup
+3.5.  Lingering in Probe BW UP state
 
 4.  Proposed improvements
 
@@ -265,13 +286,26 @@ Table of Contents
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
-              <https://www.rfc-editor.org/rfc/rfc2119>.
+              <https://www.rfc-editor.org/info/rfc2119>.
 
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
-              May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
 
 7.2.  Informative References
+
+   [RFC9000]  Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based
+              Multiplexed and Secure Transport", RFC 9000,
+              DOI 10.17487/RFC9000, May 2021,
+              <https://www.rfc-editor.org/info/rfc9000>.
+
+   [I-D.cardwell-iccrg-bbr-congestion-control]
+              Cardwell, N., Cheng, Y., Yeganeh, S. H., Swett, I., and V.
+              Jacobson, "BBR Congestion Control", Work in Progress,
+              Internet-Draft, draft-cardwell-iccrg-bbr-congestion-
+              control-02, 7 March 2022,
+              <https://datatracker.ietf.org/doc/html/draft-cardwell-
+              iccrg-bbr-congestion-control-02>.
 
    [BBRv3-Slides]
               Cardwell, N., Cheng, Y., Yang, K., Morley, D., Hassas
@@ -282,19 +316,6 @@ Table of Contents
               <https://datatracker.ietf.org/meeting/117/materials/
               slides-117-ccwg-bbrv3-algorithm-bug-fixes-and-public-
               internet-deployment-00>.
-
-   [I-D.cardwell-iccrg-bbr-congestion-control]
-              Cardwell, N., Cheng, Y., Yeganeh, S. H., Swett, I., and V.
-              Jacobson, "BBR Congestion Control", Work in Progress,
-              Internet-Draft, draft-cardwell-iccrg-bbr-congestion-
-              control-02, 7 March 2022,
-              <https://datatracker.ietf.org/doc/html/draft-cardwell-
-              iccrg-bbr-congestion-control-02>.
-
-   [RFC9000]  Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based
-              Multiplexed and Secure Transport", RFC 9000,
-              DOI 10.17487/RFC9000, May 2021,
-              <https://www.rfc-editor.org/rfc/rfc9000>.
 
 Acknowledgments
 
