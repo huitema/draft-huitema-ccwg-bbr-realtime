@@ -21,11 +21,22 @@ author:
    name: Christian Huitema
    org: Private Octopus Inc.
    email: huitema@huitema.net
+ -
+   ins: S. Nandakumar
+   name: Suhas Nandakumar
+   organization: Cisco
+   email: snandaku@cisco.com
+ -
+   ins: C. Jennings
+   name: Cullen Jennings
+   organization: cisco
+   email: fluffy@iii.ca
 
 normative:
 informative:
    RFC9000:
    I-D.cardwell-iccrg-bbr-congestion-control:
+   I-D.ietf-quic-ack-frequency:
    BBRv3-Slides:
     target: https://datatracker.ietf.org/meeting/117/materials/slides-117-ccwg-bbrv3-algorithm-bug-fixes-and-public-internet-deployment-00
     title: "BBRv3: Algorithm Bug Fixes and Public Internet Deployment"
@@ -235,7 +246,7 @@ bandwidth will not really "push up" the data rate.
 
 ## Lingering in Probe BW UP state
 
-# Proposed improvements
+# Proposed improvements {#improv}
 
 We decided four short term actions:
 
@@ -281,21 +292,48 @@ is very similar to the two phases of Hystart++ {{?RFC9406}}.
 
 ## Explicit handling of suspension
 
+During Wi-Fi suspension, the BBR endpoint will not receive any acknowledgement. This will cause the PTO and then RTO timers to expire. We handle that issue by adding a "PTO recovery" flag to the BBR state. The flag is set if a PTO event occurs, at which point BBR enters "packet conservation" mode, in which only a single packet is sent after each PTO or RTO event.
+
+The first acknowledgement receiver after setting the PTO recovery flag causes the flag to be cleared, and BBR to reenter the "Startup" state.
+
 ## Detection of feedback loss.
+
+Detecting suspension by waiting for a PTO works, but still allows transmission of a full CWND worth of packets between the start of the suspension and the PTO timer. We mitigate that by adding a "feedback lost" event.
+
+In normal operation, successive acknowledgements are received at short intervals. These intervals can be predicted if the QUIC implementation supports the "ACK Frequency" extension {{I-D.ietf-quic-ack-frequency}}, which directs the peer to acknowledge packets before a maximum delay. The "feedback lost" event is set if expected packet acknowledgements
 
 ## Exit ProbeBW-Up on delay increase.
 
-## Restart ProbeBW-Up on exit from app limited
-
 # Failed experiments
 
-We tried an option to add "filler" traffic during the "probe BW UP" phases. Maybe send redundant copies of the previously transmitted packets, maybe send padded packets. This may well backfire, so the emphasis is "try". Probably add a configuration option to control the behavior, and also set a limit, such as "add probing traffic if measured rate is lower than 20 Mbps". (TODO: explain why this was a bad idea.)
- 
-* Add a "max pacing rate" API to picoquic, so the application can limit how fast picoquic is willing
-to send data. This will most likely apply during the "resumption" described above,
-limiting how fast the application is willing to empty the application queues.
-It should limit the amount of data queued during the "undetected suspension"
-phase, and thus the impact of "priority inversion" during these phases. (TODO: explain why this was a bad idea.)
+In {{improv}}, we provide a list of improvements to BBR to better serve real-time applications.
+We validated these improvements with a mix of simulations and real-life testing. We also considered other improvements, which appeared logical at first sight but were not validated by simulations or
+experience: pushing the bandwidth limit by injecting fake traffic; and, 
+
+## Push limits with fake traffic
+
+We were concerned that BBR did not exploit the full bandwidth of the connection. Real-time applications often appear "bandwidth limited", and the bandwidth discovered by BBR is never greater than the highest bandwidth previously used by the application. This can slow down the transmission of data during peaks,
+for example when the video codec decides to produce a "self referenced" frame sometimes called I-Frame). To solve that, we tried an option to add "filler" traffic during the "probe BW UP" phases,
+instructing the QUIC code to schedule redundant copies of the previously transmitted packets in order
+to "fill the pipe". 
+
+This did not quite pan out. The various simulation did not show any particular improvement, and in fact some test cases show worse results. Pushing the bandwidth limits increases the risk of filling bottleneck buffers and causing queues or losses, and discovering a high bandwidth did not really compensate for that.
+
+The theoretical case for injecting fake traffic during just a few segments of the connection is
+also weak. Suppose that multiple connections competing for the same bottleneck do that. If they probe the bandwidth at different times, they may all find that there is a lot of capacity available. But if all the connection try to use that bandwidth, they will experience congestion. Similarly, if a real time connection competes with an elastic connection, the elastic connection may back off a little when the real-time connection is probing, but it will quickly discover and consume the available bandwidth after that. If the application wanted to "reserve" a higher bandwidth, it would probably need to
+inject filler traffic all the time, to "defend" its share of bandwidth. We were not sure that this
+would be a good idea.
+
+## FLow control low priority streams
+
+We tested adding fewer packets in transit for low priority flows so there will be fewer "priority inversions" during events like Wifi Suspension. We implemented that using QUIC's flow control
+functions. The results did not really confirm our hypothesis. The change appears to create two competing effects:
+
+* having fewer packets in transit does limit the priority inversions, and some tests to show a (very small) improvement,
+
+* but when the low priority flows are rate limited, their load gets spread overtime, instead of being dealt with immediately when plenty of bandwidth is available. This means more packets lingering over time and thus more priority inversions during network events.
+
+The measurements also show that any random change in scheduling does create random changes in performance, which means that observing small effects can be very misleading. Given the lack of compelling results, we did not push the idea further.
 
 # Security Considerations
 
