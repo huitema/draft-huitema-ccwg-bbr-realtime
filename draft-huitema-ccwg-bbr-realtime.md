@@ -277,7 +277,7 @@ solely on an event caused by random circumstances. Instead, we exit Startup only
 
 Even with the requirement of 7 measurements, there is still a risk that spurious events cause
 early exit of startup while the bandwidth is not properly assessed. We mitigate these risks
-by requiring an early entry in ProbeBW-Up state during the first ProbeBW epoch after StartUp. 
+by requiring an early entry in ProbeBW-Up state during the first ProbeBW epoch after StartUp.
 
 ## Rapid entry into ProbeBW-Up
 
@@ -308,14 +308,14 @@ In normal operation, successive acknowledgements are received at short intervals
 
 In {{improv}}, we provide a list of improvements to BBR to better serve real-time applications.
 We validated these improvements with a mix of simulations and real-life testing. We also considered other improvements, which appeared logical at first sight but were not validated by simulations or
-experience: pushing the bandwidth limit by injecting fake traffic; and, 
+experience: pushing the bandwidth limit by injecting fake traffic; and,
 
 ## Push limits with fake traffic
 
 We were concerned that BBR did not exploit the full bandwidth of the connection. Real-time applications often appear "bandwidth limited", and the bandwidth discovered by BBR is never greater than the highest bandwidth previously used by the application. This can slow down the transmission of data during peaks,
 for example when the video codec decides to produce a "self referenced" frame sometimes called I-Frame). To solve that, we tried an option to add "filler" traffic during the "probe BW UP" phases,
 instructing the QUIC code to schedule redundant copies of the previously transmitted packets in order
-to "fill the pipe". 
+to "fill the pipe".
 
 This did not quite pan out. The various simulation did not show any particular improvement, and in fact some test cases show worse results. Pushing the bandwidth limits increases the risk of filling bottleneck buffers and causing queues or losses, and discovering a high bandwidth did not really compensate for that.
 
