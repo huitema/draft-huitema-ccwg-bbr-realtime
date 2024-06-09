@@ -148,7 +148,44 @@ be tied to the "application limited" nature of the application.
 
 These issues are developed in the following sections.
 
-## Extra delays during initial startup
+## Extra delays during initial startup {#startup-queues}
+
+At the beginning of the connection, BBR is initially in Startup state.
+In Startup BBR sets BBR.pacing_gain to BBRStartupPacingGain (2.77) and BBR.cwnd_gain to
+BBRStartupCwndGain (2). BBR exits the end of the startup phase when the estimated bandwidth
+does grow significantly (by at least 25%) for 3 consecutive rounds, or if packet losses
+are detected. This results in
+an algorithm that robustly discovers the bottleneck bandwidth. Inconveniently for
+us, is also results in building significant queues.
+
+Towards the end of the Startup phase, we reach a point when both the bottleneck bandwidth
+and the min RTT have been correctly estimated. After that point, per specification, the
+pacing rate will be set to 2.77 times the bottleneck bandwidth, and the CWND to
+twice the product of estimated bandwidth and min RTT. Since the pacing rate is significantly
+larger than the bottleneck capacity, packets will be queued at the bottleneck. If the
+bottleneck has sufficient buffers, the queue
+size will increase until the amount of bytes in transit matches the CWND value. The RTT
+will increase to twice the min RTT, and will remind at that level for 3 roundtrips, which
+means 6 times the minimum RTT.
+
+The extra buffers and the extra delays do affect the performance of real time application.
+The application will end up sending more "low priority" data than necessary, resulting in
+a form of "priority inversion" as high priority data are queued and low priority data are
+delivered during the "draining" phase that follows startup.
+
+## Sensitivity to early bandwidth estimation {#early-sensitivity}
+
+After Startup and Drain, BBR will enter the ProbeBW state. BBRv2 organizes those as
+series of epochs, each composed of a ProbeBW-Down rounds, a variable number of ProbeBW-Cruise
+rounds, a ProbeBW-Refill round, and finally a series of ProbeBW-Up phases. The number of
+ProbeBW-Cruise rounds is computed so that BBR competes fairly with other congestion
+control algorithms like Reno or Cubic. In some conditions, there can be up to 60 rounds
+of ProbeBW-Cruise, during which the pacing rate will never exceed the bandwidth
+estimated previously.
+
+If BBR exited the Startup state too soon for any reason, the large number of ProbeBW-Cruise
+causes the connection to retain a very low pacing rate for a long time. In real time
+applications, this could mean using a much lower video definition than actual bandwidth permits.
 
 ## Wi-Fi suspension
 
@@ -162,7 +199,7 @@ We can describe this process as a succession of phases:
   data of various priority levels
 * Detected suspension, during which no more data is sent
 * Resumption, during which the sender using BBR progressively ramps up the
-  sending rate and dequeues the frames stuck in applcation queues, in order of priority
+  sending rate and dequeues the frames stuck in application queues, in order of priority
 * and back to normal state, when the application queues are emptied rapidly.
 
 The queuing happens in the "undetected suspension" state, which currently lasts one PTO,
@@ -200,15 +237,13 @@ bandwidth will not really "push up" the data rate.
 
 # Proposed improvements
 
-We decided three short term actions:
+We decided four short term actions:
 
-* Revise the "suspension" tests in the picoquic test suite to verify the behavior of the 'quality' API.
+* implement an "early exit" from startup.
 
-* Add a "max pacing rate" API to picoquic, so the application can limit how fast picoquic is willing
-to send data. This will most likely apply during the "resumption" described above,
-limiting how fast the application is willing to empty the application queues.
-It should limit the amount of data queued during the "undetected suspension"
-phase, and thus the impact of "priority inversion" during these phases.
+* add an option for rapid start of ProbeBW-Up,
+
+* Add explicit handling of "suspension" to BBR,
 
 * Study an additional "No Feedback" event passed by the stack to the CC algorithm.
 Normally, picoquic receives trains of acknowledgements at regular intervals,
@@ -217,10 +252,50 @@ The "No Feedback" API would detect that stoppage much faster than waiting for a 
 The stack could thus temporarily stop polling for new data until new ACKs are received,
 which would limit the amount of data queued in front of the Wi-Fi drivers, and thus also limit the effect of "priority inversion".
 
-BBR only increases the bandwidth during the "Probe BW UP" state. We want to trigger that "UP" state when the application has new data to send, for example when new streams are being opened.
+* BBR only increases the bandwidth during the "Probe BW UP" state. We want to trigger that "UP" state when the application has new data to send, for example when new streams are being opened.
 
-We discussed that before. I think we should try an option to add "filler" traffic during the "probe BW UP" phases. Maybe send redundant copies of the previously transmitted packets, maybe send padded packets. This may well backfire, so the emphasis is "try". Probably add a configuration option to control the behavior, and also set a limit, such as "add probing traffic if measured rate is lower than 20 Mbps".
+## Exit startup early upon RTT increase
 
+BBR exits start up if packet losses are observed, or if the estimated bottleneck bandwidth
+does not increase for 3 rounds. We added a third exit condition, exit the startup state if the RTT increases too much.
+
+We defined too much as "the RTT measurement is at least 25% larger than the min RTT. However, there
+can be significant jitter in RTT measurements, and we do not want to exit startup based
+solely on an event caused by random circumstances. Instead, we exit Startup only if
+7 consecutive measurements of the RTT are significantly larger than the Min RTT.
+
+Even with the requirement of 7 measurements, there is still a risk that spurious events cause
+early exit of startup while the bandwidth is not properly assessed. We mitigate these risks
+by requiring an early entry in ProbeBW-Up state during the first ProbeBW epoch after StartUp. 
+
+## Rapid entry into ProbeBW-Up
+
+We add to the BBR state a flag "bw_probe_quickly", to signal a desire to enter the ProbeBW-Up
+state at the first opportunity. When that flag is set, instead of moving to the ProbeBW-Cruise
+state at the end of the ProbeBW-Down round, BBR moves directly to ProbeBW-Refill and then ProbeBW-UP.
+The flag is cleared after starting ProbeBW-UP.
+
+During each round of ProbeBW-Up, BBR will increase the pacing rate to 25% more than the measured
+value. The combination of exiting Startup after a delay test and then starting ProbeBW-UP quickly
+is very similar to the two phases of Hystart++ {{?RFC9406}}.
+
+## Explicit handling of suspension
+
+## Detection of feedback loss.
+
+## Exit ProbeBW-Up on delay increase.
+
+## Restart ProbeBW-Up on exit from app limited
+
+# Failed experiments
+
+We tried an option to add "filler" traffic during the "probe BW UP" phases. Maybe send redundant copies of the previously transmitted packets, maybe send padded packets. This may well backfire, so the emphasis is "try". Probably add a configuration option to control the behavior, and also set a limit, such as "add probing traffic if measured rate is lower than 20 Mbps". (TODO: explain why this was a bad idea.)
+ 
+* Add a "max pacing rate" API to picoquic, so the application can limit how fast picoquic is willing
+to send data. This will most likely apply during the "resumption" described above,
+limiting how fast the application is willing to empty the application queues.
+It should limit the amount of data queued during the "undetected suspension"
+phase, and thus the impact of "priority inversion" during these phases. (TODO: explain why this was a bad idea.)
 
 # Security Considerations
 
