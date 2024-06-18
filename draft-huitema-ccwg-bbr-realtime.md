@@ -29,7 +29,7 @@ author:
  -
    ins: C. Jennings
    name: Cullen Jennings
-   organization: cisco
+   organization: Cisco
    email: fluffy@iii.ca
 
 normative:
@@ -227,7 +227,14 @@ of frames queued in front of the Wi-Fi driver will be several times more than du
 the first suspension. The "priority inversion" effect will be much larger. Depending
 on random events, we may see the 360p video freezing while the 1080p video is still animating.
 
-## Bad Wifi Spot
+## Spotty or Bad WIFI Transmission
+
+WIFI transmission experiencing reduction in available bandwidth compounded with sustained packet losses causes couple of major issues. A
+- As with wifi suspension scenario, the senders expect a reduction in bandwidth and a delayed detection of this condition causes less important packets (say 1080p) to be enqueued for transmission.
+- Packet loss triggered retransmissions leads to increased data in flight
+
+Both of these conditions result in negative compounding effects where less important packets ends up consuming more of the available bandwidith, thus causing priority inversion and wasted bandwidth due to unnecessary retransmissions.
+
 
 ## Downward drift
 
