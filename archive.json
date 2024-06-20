@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-06-18T00:15:02.578602+00:00",
+  "timestamp": "2024-06-20T00:14:28.088917+00:00",
   "repo": "huitema/draft-huitema-ccwg-bbr-realtime",
   "labels": [
     {
@@ -246,26 +246,42 @@
       "id": "PR_kwDOLnYg685ywf2c",
       "title": "spotty wifi text",
       "url": "https://github.com/huitema/draft-huitema-ccwg-bbr-realtime/pull/6",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "suhasHere",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "",
       "createdAt": "2024-06-18T00:07:36Z",
-      "updatedAt": "2024-06-18T00:07:37Z",
+      "updatedAt": "2024-06-18T16:42:02Z",
       "baseRepository": "huitema/draft-huitema-ccwg-bbr-realtime",
       "baseRefName": "main",
       "baseRefOid": "5678464c2f37d071f28661ff7ed3b1902344c35f",
       "headRepository": "huitema/draft-huitema-ccwg-bbr-realtime",
       "headRefName": "suhas",
       "headRefOid": "3bca5ff5b23ca561f0a9f2500455a864a0e9e3fb",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-06-18T16:42:02Z",
+      "mergedAt": "2024-06-18T16:42:02Z",
+      "mergedBy": "huitema",
+      "mergeCommit": {
+        "oid": "e1411e03a40077966dd9e451199f8fbce0aed771"
+      },
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOLnYg685-uJS8",
+          "commit": {
+            "abbreviatedOid": "3bca5ff"
+          },
+          "author": "huitema",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-06-18T16:41:55Z",
+          "updatedAt": "2024-06-18T16:41:55Z",
+          "comments": []
+        }
+      ]
     }
   ]
 }
