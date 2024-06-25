@@ -10,8 +10,8 @@
 <meta content="Cullen Jennings" name="author">
 <meta content='
        We are studying the transmission of real-time Media over QUIC. There are
-two priorities: maintaining low transmission delays by avoiding building queues, and
-using the available network capacity to provide the best possible
+two priorities: maintain low transmission delays by avoiding building queues, and
+use the available network capacity to provide the best possible
 experience. We found through experiments that while the BBR algorithm
 generally allow us to correctly and timely assess network capacity,
 we still see "glitches" in specific conditions, in particular when
@@ -1081,8 +1081,8 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">We are studying the transmission of real-time Media over QUIC. There are
-two priorities: maintaining low transmission delays by avoiding building queues, and
-using the available network capacity to provide the best possible
+two priorities: maintain low transmission delays by avoiding building queues, and
+use the available network capacity to provide the best possible
 experience. We found through experiments that while the BBR algorithm
 generally allow us to correctly and timely assess network capacity,
 we still see "glitches" in specific conditions, in particular when
@@ -1269,14 +1269,14 @@ without creating queues.<a href="#section-1-4" class="pilcrow">¶</a></p>
 <p id="section-1-5">Real-time transmissions have a variable data rate. Different media codec have
 different behavior, but a common pattern is to periodically send "fully encoded"
 frames, followed by series of "differentially encoded" frame. The fully encoded
-frames serve as possible synchronization point at which a recipient can start
+frames serve as possible synchronization points at which a recipient can start
 rendering data, while the differentially encoded frames can only be processed
 if the previous frames have been received. This structure create periodic peaks
 of traffic, during which the connection might experience some for of congestion,
 followed by long periods of relatively low bandwidth demand, which the congestion
 control algorithm may treat as "application limited". Of course, if the bandwidth
 is too low, even the differentially encode frame may create some congestion. In the
-simulcast structure, that would react to that by delaying the higher definition
+simulcast structure, the application would react to congestion by delaying the higher definition
 video channels.<a href="#section-1-5" class="pilcrow">¶</a></p>
 <p id="section-1-6">In our experience, we see that BBR generally works well for these applications.
 However, we see problems
