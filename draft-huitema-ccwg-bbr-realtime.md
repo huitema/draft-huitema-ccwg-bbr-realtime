@@ -37,6 +37,7 @@ informative:
    RFC9000:
    I-D.cardwell-iccrg-bbr-congestion-control:
    I-D.ietf-quic-ack-frequency:
+   I-D.ietf-moq-transport:
    BBRv3-Slides:
     target: https://datatracker.ietf.org/meeting/117/materials/slides-117-ccwg-bbrv3-algorithm-bug-fixes-and-public-internet-deployment-00
     title: "BBRv3: Algorithm Bug Fixes and Public Internet Deployment"
@@ -66,15 +67,21 @@ informative:
     -
       ins: V. Vasiliev
 
+   Wi-Fi-Suspension-Blog:
+    target: https://www.privateoctopus.com/2023/05/18/the-weird-case-of-wifi-latency-spikes.html
+    title: "The weird case of the wifi latency spikes"
+    date: "May 18, 2023"
+    seriesinfo: "Christian Huitema's blog"
+    author:
+    -
+      ins: C. Huitema
 
-
-
-
+    
 
 --- abstract
 
 We are studying the transmission of real-time Media over QUIC. There are
-two priorities: maintaining low transmission delays by avoid queues, and
+two priorities: maintaining low transmission delays by avoiding building queues, and
 using the available network capacity to provide the best possible
 experience. We found through experiments that while the BBR algorithm
 generally allow us to correctly and timely assess network capacity,
@@ -90,7 +97,10 @@ of experience delivered by the real-time media application.
 
 When designing real-time communication applications over QUIC, we want to
 maintaining low transmission delays but provide the best possible
-experience that the current transmission capacity allows.
+experience that the current transmission capacity allows. We elected
+to use the version 3 of the BBR congestion control algorithm
+(see {{I-D.cardwell-iccrg-bbr-congestion-control}} and
+{{BBRv3-Slides}}).
 We found through experiments that while the BBR algorithm
 generally allow us to correctly and timely assess network capacity,
 we still see "glitches" in specific conditions, during which the
@@ -136,9 +146,6 @@ simulcast structure, that would react to that by delaying the higher definition
 video channels.
 
 In our experience, we see that BBR generally works well for these applications.
-We have experimented with BBR V3, define by the BBRv2 IETF
-Draft {{I-D.cardwell-iccrg-bbr-congestion-control}} and by
-complementary data in a presentation to the IRTF {{BBRv3-Slides}}.
 However, we see problems
 in the early stage of the connection, when the path capacity is not yet
 assessed, and during sudden transitions, such as experienced in Wi-Fi networks.
@@ -198,9 +205,25 @@ If BBR exited the Startup state too soon for any reason, the large number of Pro
 causes the connection to retain a very low pacing rate for a long time. In real time
 applications, this could mean using a much lower video definition than actual bandwidth permits.
 
-## Wi-Fi suspension
+## Wi-Fi suspension {#suspension}
 
-The current behavior is that the sender, using BBR, detects the Wi-Fi suspension about 1 RTT after it happens, at which point it stops polling for new data. Then, maybe 60 to 100ms later depending on conditions, it starts receiving ACK from the peer that were queued at the router during the suspension. Picoquic and BBR refresh the congestion parameters, and start polling the application. The queued data will be sent in order of priority, ending with the 1080p frames.
+We observed that Wi-Fi networks often go into "suspension" for brief intervals
+(see {{Wi-Fi-Suspension-Blog}}, typically of 100 to 200ms. During the transmission,
+the Wi-Fi radio appears to be turned off, or maybe switched to a different channel.
+Packets sent by the application during the interval are kept in a queue for the Wi-Fi driver.
+Packets sent by remote nodes are at the Wi-Fi router. After the suspension, queued
+packets are sent. There is generally no packet loss, merely an added delay. We have
+observed this behavior on multiple Wi-Fi networks, using different brands of Wi-Fi
+equipment and different operating systems. We can speculate about the cause of the
+suspension, such as exploring alternative Wi-Fi channels or saving energy.
+
+When Wi-Fi suspension happens, the sender, using BBR, keeps sending at the computed
+pacing rate as long as the congestion window allows -- these packets will be queued.
+The suspension often lasts longer than 1 PTO, at which point no new data will be sent
+but some queued packets maybe repeated. Then, at the end of the suspension,
+the sender starts receiving ACK from the peer that were queued at the router.
+BBR refreshes the congestion parameters, and start polling the application.
+New data will be sent in order of priority, ending with the 1080p frames.
 
 We can describe this process as a succession of phases:
 
@@ -208,13 +231,15 @@ We can describe this process as a succession of phases:
   levels are sent, with no queue.
 * Undetected suspension, during which queues are building up with a mix of
   data of various priority levels
-* Detected suspension, during which no more data is sent
+* Detected suspension, during which no more data is sent and new audio or
+  video frames are kept in application queues.
+* End of suspension, during which the Wi-Fi driver sent the queued packets,
 * Resumption, during which the sender using BBR progressively ramps up the
   sending rate and dequeues the frames stuck in application queues, in order of priority
 * and back to normal state, when the application queues are emptied rapidly.
 
-The queuing happens in the "undetected suspension" state, which currently lasts one PTO,
-i.e., a bit more than one RTT. So we get one RTT worth of audio, 360p, 720p and 1080p
+The driver queue fills during the "undetected suspension" state, which currently lasts one PTO,
+i.e., a bit more than one RTT. So we get at least one RTT worth of audio, 360p, 720p and 1080p
 frames in the pipe-line, typically queued in front of the Wi-Fi driver. These frames
 will be delivered by the network before any other frame sent during the "resumption".
 We will observe some kind of "priority inversion".
@@ -229,11 +254,14 @@ on random events, we may see the 360p video freezing while the 1080p video is st
 
 ## Spotty or Bad WIFI Transmission
 
-WIFI transmission experiencing reduction in available bandwidth compounded with sustained packet losses causes couple of major issues. A
-- As with wifi suspension scenario, the senders expect a reduction in bandwidth and a delayed detection of this condition causes less important packets (say 1080p) to be enqueued for transmission.
+WIFI transmission experiencing reduction in available bandwidth compounded with sustained packet losses causes couple of major issues.
+
+- As with wifi suspension scenario, the senders expect a reduction in bandwidth
+  and a delayed detection of this condition causes less important packets (say 1080p)
+  to be enqueued for transmission.
 - Packet loss triggered retransmissions leads to increased data in flight
 
-Both of these conditions result in negative compounding effects where less important packets ends up consuming more of the available bandwidith, thus causing priority inversion and wasted bandwidth due to unnecessary retransmissions.
+Both of these conditions result in negative compounding effects where less important packets ends up consuming more of the available bandwidth, thus causing priority inversion and wasted bandwidth due to unnecessary retransmissions.
 
 
 ## Downward drift
@@ -245,32 +273,45 @@ It seems that the application never fully uses the available rate, and that succ
 The hypothesis is that the application never sends faster than pacing permits, so there is some kind of negative feedback loop.
 
 The downward spiral may be compounded by the practice of resetting streams that have fallen behind.
-This is line with discussions in MoQ. A new stream will be restarted for the next block of frames,
-starting with the next I-Frame. The application will try to send more data at that point, but the
+A new stream will be restarted for the next block of frames,
+starting with the next I-Frame, using the "stream per group" approach defined in
+{{I-D.ietf-moq-transport}}.
+The application will try to send more data at that point, but the
 probing rate will stay low until until the next "probe BW UP" phase, which may be a few seconds away.
 When BBR probes for more data, the high speed stream may have already been reset, and the offered
 bandwidth will not really "push up" the data rate.
 
-## Lingering in Probe BW UP state
+## Lingering in Probe BW UP state {#lingering}
+
+The offered rate of real-time application alternates between rare peaks during the
+transmission of I-Frames, and a lower data rate between these frames. In a typical
+setup, BBR will operate in "application limited" mode most of the time, except
+maybe during the transmission of I-Frames, or if the network becomes congested.
+
+If BBR reaches the Probe BW UP state while application limited, it will only exit
+that state when the next I-Frames are sent, which may be seconds away, or if congestion
+happens. When congestion or Wi-Fi suspension happens in that state, both the
+pacing rate and the congestion window will be larger than the "cruise" value.
+In the case of congestion, the connection will remain in
+Probe BW UP state during three rounds. This
+will exacerbate the building of queues and the occurrence of priority inversion
+during congestion events. 
 
 # Proposed improvements {#improv}
 
-We decided four short term actions:
+We implemented several improvements to BBR for handling real time applications:
 
 * implement an "early exit" from startup.
 
 * add an option for rapid start of ProbeBW-Up,
 
-* Add explicit handling of "suspension" to BBR,
+* add explicit handling of "suspension" to BBR,
 
-* Study an additional "No Feedback" event passed by the stack to the CC algorithm.
-Normally, picoquic receives trains of acknowledgements at regular intervals,
-much shorter that the RTT. In case of suspension, the stream of ACKs stops.
-The "No Feedback" API would detect that stoppage much faster than waiting for a PTO.
-The stack could thus temporarily stop polling for new data until new ACKs are received,
-which would limit the amount of data queued in front of the Wi-Fi drivers, and thus also limit the effect of "priority inversion".
+* add detection of feedback loss to minimize building of queues during suspension,
 
-* BBR only increases the bandwidth during the "Probe BW UP" state. We want to trigger that "UP" state when the application has new data to send, for example when new streams are being opened.
+* exiting Probe BW UP on delay increase,
+
+* entering Probe BW UP after new streams are started
 
 ## Exit startup early upon RTT increase
 
@@ -307,9 +348,26 @@ The first acknowledgement receiver after setting the PTO recovery flag causes th
 
 Detecting suspension by waiting for a PTO works, but still allows transmission of a full CWND worth of packets between the start of the suspension and the PTO timer. We mitigate that by adding a "feedback lost" event.
 
-In normal operation, successive acknowledgements are received at short intervals. These intervals can be predicted if the QUIC implementation supports the "ACK Frequency" extension {{I-D.ietf-quic-ack-frequency}}, which directs the peer to acknowledge packets before a maximum delay. The "feedback lost" event is set if expected packet acknowledgements
+In normal operation, successive acknowledgements are received at short intervals. These intervals can be predicted if the QUIC implementation supports the "ACK Frequency" extension {{I-D.ietf-quic-ack-frequency}}, which directs the peer to acknowledge packets before a maximum delay. The "feedback lost" event is set if expected packet acknowledgements do not arrive after twice the predicted interval.
+
+Our modified BBR code reacts to this event by resetting the CWND to the current "in-flight" value,
+which effectively prevents adding new packets until a next acknowledgement is received. The "feedback lost" event typically arrives sooner than the PTO event, and thus helps avoiding queue building during
+the "undetected" phase of suspension defined in 
 
 ## Exit ProbeBW-Up on delay increase.
+
+We added a test of delay increase when in ProbeBW-Up state. This helps avoiding build
+excessive queues in ProbeBW-up state, and it also avoids lingering in ProbeBW-up state
+(see {{lingering}}).
+
+## Entering ProbeBW-UP on the creation of new streams
+
+The bandwidth drift issue happens largely because there is no synchronization between
+the increase of bandwidth demand and the probing cycle of BBR. We are considering adding
+a mechanism to synchronize bandwidth probing with period of higher bandwidth demand,
+characterized for example with the beginning of new streams.
+
+At the time of this writing, this synchronization mechanism is not yet implemented.
 
 # Failed experiments
 
@@ -331,7 +389,7 @@ also weak. Suppose that multiple connections competing for the same bottleneck d
 inject filler traffic all the time, to "defend" its share of bandwidth. We were not sure that this
 would be a good idea.
 
-## FLow control low priority streams
+## Flow control low priority streams
 
 We tested adding fewer packets in transit for low priority flows so there will be fewer "priority inversions" during events like Wifi Suspension. We implemented that using QUIC's flow control
 functions. The results did not really confirm our hypothesis. The change appears to create two competing effects:
@@ -344,7 +402,7 @@ The measurements also show that any random change in scheduling does create rand
 
 # Security Considerations
 
-TODO Security
+We do not believe that changes in the BBR implementation introduce new security issues.
 
 
 # IANA Considerations
