@@ -76,7 +76,7 @@ informative:
     -
       ins: C. Huitema
 
-    
+
 
 --- abstract
 
@@ -295,7 +295,7 @@ pacing rate and the congestion window will be larger than the "cruise" value.
 In the case of congestion, the connection will remain in
 Probe BW UP state during three rounds. This
 will exacerbate the building of queues and the occurrence of priority inversion
-during congestion events. 
+during congestion events.
 
 # Proposed improvements {#improv}
 
@@ -352,7 +352,7 @@ In normal operation, successive acknowledgements are received at short intervals
 
 Our modified BBR code reacts to this event by resetting the CWND to the current "in-flight" value,
 which effectively prevents adding new packets until a next acknowledgement is received. The "feedback lost" event typically arrives sooner than the PTO event, and thus helps avoiding queue building during
-the "undetected" phase of suspension defined in 
+the "undetected" phase of suspension defined in
 
 ## Exit ProbeBW-Up on delay increase.
 
