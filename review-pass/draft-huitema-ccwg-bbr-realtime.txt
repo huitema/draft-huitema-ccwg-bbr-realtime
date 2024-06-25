@@ -16,8 +16,8 @@ Expires: 27 December 2024                                    C. Jennings
 Abstract
 
    We are studying the transmission of real-time Media over QUIC.  There
-   are two priorities: maintaining low transmission delays by avoiding
-   building queues, and using the available network capacity to provide
+   are two priorities: maintain low transmission delays by avoiding
+   building queues, and use the available network capacity to provide
    the best possible experience.  We found through experiments that
    while the BBR algorithm generally allow us to correctly and timely
    assess network capacity, we still see "glitches" in specific
@@ -132,7 +132,7 @@ Table of Contents
    codec have different behavior, but a common pattern is to
    periodically send "fully encoded" frames, followed by series of
    "differentially encoded" frame.  The fully encoded frames serve as
-   possible synchronization point at which a recipient can start
+   possible synchronization points at which a recipient can start
    rendering data, while the differentially encoded frames can only be
    processed if the previous frames have been received.  This structure
    create periodic peaks of traffic, during which the connection might
@@ -140,8 +140,8 @@ Table of Contents
    relatively low bandwidth demand, which the congestion control
    algorithm may treat as "application limited".  Of course, if the
    bandwidth is too low, even the differentially encode frame may create
-   some congestion.  In the simulcast structure, that would react to
-   that by delaying the higher definition video channels.
+   some congestion.  In the simulcast structure, the application would
+   react to congestion by delaying the higher definition video channels.
 
    In our experience, we see that BBR generally works well for these
    applications.  However, we see problems in the early stage of the
