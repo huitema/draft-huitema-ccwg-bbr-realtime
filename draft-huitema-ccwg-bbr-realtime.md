@@ -132,7 +132,7 @@ or high definition video, but they will follow the general principle of trying
 to schedule just the right amount of transmission to obtain a good experience
 without creating queues.
 
-Real-time transmissions have a variable data rate. Different media codec have
+Real-time transmissions have a variable data rate. Different media codecs have
 different behavior, but a common pattern is to periodically send "fully encoded"
 frames, followed by series of "differentially encoded" frame. The fully encoded
 frames serve as possible synchronization point at which a recipient can start
@@ -183,7 +183,7 @@ twice the product of estimated bandwidth and min RTT. Since the pacing rate is s
 larger than the bottleneck capacity, packets will be queued at the bottleneck. If the
 bottleneck has sufficient buffers, the queue
 size will increase until the amount of bytes in transit matches the CWND value. The RTT
-will increase to twice the min RTT, and will remind at that level for 3 roundtrips, which
+will increase to twice the min RTT, and will remain at that level for 3 roundtrips, which
 means 6 times the minimum RTT.
 
 The extra buffers and the extra delays do affect the performance of real time application.
@@ -268,7 +268,7 @@ Both of these conditions result in negative compounding effects where less impor
 
 In addition to suspension, we also observe that the congestion control API tends to gradually drop the packing rate over the long run.
 
-It seems that the application never fully uses the available rate, and that successive queuing events cause the bandwidth to go down progressively. Maybe we have something systematic here? The application always stays within the limits posed by congestion control, which means that the measured rate will always be lower than the allowed rate.. BBR sometimes move to a "probe BW UP" state, but the application does not appear to push much more transmission during that state, so the measured rate does not really increase.
+It seems that the application never fully uses the available rate, and that successive queuing events cause the bandwidth to go down progressively. Maybe we have something systematic here? The application always stays within the limits posed by congestion control, which means that the measured rate will always be lower than the allowed rate. BBR sometimes move to a "probe BW UP" state, but the application does not appear to push much more transmission during that state, so the measured rate does not really increase.
 
 The hypothesis is that the application never sends faster than pacing permits, so there is some kind of negative feedback loop.
 
