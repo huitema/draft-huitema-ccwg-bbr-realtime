@@ -252,17 +252,32 @@ of frames queued in front of the Wi-Fi driver will be several times more than du
 the first suspension. The "priority inversion" effect will be much larger. Depending
 on random events, we may see the 360p video freezing while the 1080p video is still animating.
 
-## Spotty or Bad WIFI Transmission
+## Spotty or Bad Wi-Fi Transmission
 
-WIFI transmission experiencing reduction in available bandwidth compounded with sustained packet losses causes couple of major issues.
+Wi-Fi bandwidth can drop suddenly due to small changes in the position or orientation
+of the device, or if a mobile obstacle like a human body moves into the path of
+transmission. We see small events causing a drastic reduction in bandwidth, and
+sometimes a marked increase in packet loss rates. We expect that the congestion
+control algorithm will quickly detect the bandwidth reduction, and inform the
+application, but in practice the detection always lag the event.
 
-- As with wifi suspension scenario, the senders expect a reduction in bandwidth
-  and a delayed detection of this condition causes less important packets (say 1080p)
-  to be enqueued for transmission.
-- Packet loss triggered retransmissions leads to increased data in flight
+As in the Wi-Fi suspension scenario, the delay in detecting the bandwidth reduction
+causes priority inversions. The application will continue sending data at the previously
+allowed rate for some time, which will cause less important packets (say 1080p)
+to be enqueued for transmission. These packets will likely be queued in front of
+the Wi-Fi driver, and will be transmitted before any more urgent data can be sent.
 
-Both of these conditions result in negative compounding effects where less important packets ends up consuming more of the available bandwidth, thus causing priority inversion and wasted bandwidth due to unnecessary retransmissions.
+BBRv3 will reduce the CWND quickly if packet losses are detected, but these losses
+will typically only be detected after a couple of RTT -- or maybe more if the
+packet queues are allowed to grow to large sizes. The effect is amplified if the
+pacing rate or the CWND was over estimated before the event, maybe because the
+connection was application limited.
 
+The bandwidth will be restored when the position or orientation of the device
+changes again, or if the obstacles are removed. When that happens, we expect
+that the congestion control algorithm will find out rapidly and let the application
+resume full transmission, but this will only happen after when BBR reaches the
+ProbeBW UP state, which may take a large number of RTTs with BBR v3. 
 
 ## Downward drift
 
@@ -340,19 +355,32 @@ is very similar to the two phases of Hystart++ {{?RFC9406}}.
 
 ## Explicit handling of suspension
 
-During Wi-Fi suspension, the BBR endpoint will not receive any acknowledgement. This will cause the PTO and then RTO timers to expire. We handle that issue by adding a "PTO recovery" flag to the BBR state. The flag is set if a PTO event occurs, at which point BBR enters "packet conservation" mode, in which only a single packet is sent after each PTO or RTO event.
+During Wi-Fi suspension, the BBR endpoint will not receive any acknowledgement. This
+will cause the PTO and then RTO timers to expire. We handle that issue by adding a
+"PTO recovery" flag to the BBR state. The flag is set if a PTO event occurs, at which
+point BBR enters "packet conservation" mode, in which only a single packet is sent
+after each PTO or RTO event.
 
-The first acknowledgement receiver after setting the PTO recovery flag causes the flag to be cleared, and BBR to reenter the "Startup" state.
+The first acknowledgement receiver after setting the PTO recovery flag causes the flag
+to be cleared, and BBR to reenter the "Startup" state.
 
 ## Detection of feedback loss.
 
-Detecting suspension by waiting for a PTO works, but still allows transmission of a full CWND worth of packets between the start of the suspension and the PTO timer. We mitigate that by adding a "feedback lost" event.
+Detecting suspension by waiting for a PTO works, but still allows transmission of a full
+CWND worth of packets between the start of the suspension and the PTO timer. We mitigate
+that by adding a "feedback lost" event.
 
-In normal operation, successive acknowledgements are received at short intervals. These intervals can be predicted if the QUIC implementation supports the "ACK Frequency" extension {{I-D.ietf-quic-ack-frequency}}, which directs the peer to acknowledge packets before a maximum delay. The "feedback lost" event is set if expected packet acknowledgements do not arrive after twice the predicted interval.
+In normal operation, successive acknowledgements are received at short intervals.
+These intervals can be predicted if the QUIC implementation supports the "ACK Frequency"
+extension {{I-D.ietf-quic-ack-frequency}}, which directs the peer to acknowledge
+packets before a maximum delay. The "feedback lost" event is set if expected
+packet acknowledgements do not arrive after twice the predicted interval.
 
 Our modified BBR code reacts to this event by resetting the CWND to the current "in-flight" value,
-which effectively prevents adding new packets until a next acknowledgement is received. The "feedback lost" event typically arrives sooner than the PTO event, and thus helps avoiding queue building during
-the "undetected" phase of suspension defined in
+which effectively prevents adding new packets until a next acknowledgement is received.
+The "feedback lost" event typically arrives sooner than the PTO event, and thus helps
+avoiding queue building
+during the "undetected" phase of suspension defined in {{suspension}}.
 
 ## Exit ProbeBW-Up on delay increase.
 
@@ -372,33 +400,50 @@ At the time of this writing, this synchronization mechanism is not yet implement
 # Failed experiments
 
 In {{improv}}, we provide a list of improvements to BBR to better serve real-time applications.
-We validated these improvements with a mix of simulations and real-life testing. We also considered other improvements, which appeared logical at first sight but were not validated by simulations or
+We validated these improvements with a mix of simulations and real-life testing. We also considered
+other improvements, which appeared logical at first sight but were not validated by simulations or
 experience: pushing the bandwidth limit by injecting fake traffic; and,
 
 ## Push limits with fake traffic
 
-We were concerned that BBR did not exploit the full bandwidth of the connection. Real-time applications often appear "bandwidth limited", and the bandwidth discovered by BBR is never greater than the highest bandwidth previously used by the application. This can slow down the transmission of data during peaks,
-for example when the video codec decides to produce a "self referenced" frame sometimes called I-Frame). To solve that, we tried an option to add "filler" traffic during the "probe BW UP" phases,
+We were concerned that BBR did not exploit the full bandwidth of the connection. Real-time
+applications often appear "bandwidth limited", and the bandwidth discovered by BBR is never
+greater than the highest bandwidth previously used by the application. This can slow down the
+transmission of data during peaks,
+for example when the video codec decides to produce a "self referenced" frame (sometimes called I-Frame). To solve that, we tried an option to add "filler" traffic during the "probe BW UP" phases,
 instructing the QUIC code to schedule redundant copies of the previously transmitted packets in order
 to "fill the pipe".
 
-This did not quite pan out. The various simulation did not show any particular improvement, and in fact some test cases show worse results. Pushing the bandwidth limits increases the risk of filling bottleneck buffers and causing queues or losses, and discovering a high bandwidth did not really compensate for that.
+This did not quite pan out. The various simulation did not show any particular improvement, and
+in fact some test cases show worse results. Pushing the bandwidth limits increases the risk
+of filling bottleneck buffers and causing queues or losses, and discovering a high bandwidth did not really compensate for that.
 
 The theoretical case for injecting fake traffic during just a few segments of the connection is
-also weak. Suppose that multiple connections competing for the same bottleneck do that. If they probe the bandwidth at different times, they may all find that there is a lot of capacity available. But if all the connection try to use that bandwidth, they will experience congestion. Similarly, if a real time connection competes with an elastic connection, the elastic connection may back off a little when the real-time connection is probing, but it will quickly discover and consume the available bandwidth after that. If the application wanted to "reserve" a higher bandwidth, it would probably need to
-inject filler traffic all the time, to "defend" its share of bandwidth. We were not sure that this
-would be a good idea.
+also weak. Suppose that multiple connections competing for the same bottleneck do that. If they
+probe the bandwidth at different times, they may all find that there is a lot of capacity available.
+But if all the connection try to use that bandwidth, they will experience congestion.
+Similarly, if a real time connection competes with an elastic connection, the elastic
+connection may back off a little when the real-time connection is probing, but it will
+quickly discover and consume the available bandwidth after that. If the application wanted
+to "reserve" a higher bandwidth, it would probably need to inject filler traffic all the time, to
+"defend" its share of bandwidth. We were not sure that this would be a good idea.
 
 ## Flow control low priority streams
 
 We tested adding fewer packets in transit for low priority flows so there will be fewer "priority inversions" during events like Wifi Suspension. We implemented that using QUIC's flow control
-functions. The results did not really confirm our hypothesis. The change appears to create two competing effects:
+functions. The results did not really confirm our hypothesis. The change appears to create two
+competing effects:
 
-* having fewer packets in transit does limit the priority inversions, and some tests to show a (very small) improvement,
+* having fewer packets in transit does limit the priority inversions, and some tests to show a (very
+small) improvement,
 
-* but when the low priority flows are rate limited, their load gets spread overtime, instead of being dealt with immediately when plenty of bandwidth is available. This means more packets lingering over time and thus more priority inversions during network events.
+* but when the low priority flows are rate limited, their load gets spread overtime, instead of
+being dealt with immediately when plenty of bandwidth is available. This means more packets
+lingering over time and thus more priority inversions during network events.
 
-The measurements also show that any random change in scheduling does create random changes in performance, which means that observing small effects can be very misleading. Given the lack of compelling results, we did not push the idea further.
+The measurements also show that any random change in scheduling does create random changes in
+performance, which means that observing small effects can be very misleading. Given the lack of
+compelling results, we did not push the idea further.
 
 # Security Considerations
 
