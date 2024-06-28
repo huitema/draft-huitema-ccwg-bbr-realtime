@@ -5,9 +5,9 @@
 Network Working Group                                         C. Huitema
 Internet-Draft                                      Private Octopus Inc.
 Intended status: Informational                             S. Nandakumar
-Expires: 27 December 2024                                    C. Jennings
+Expires: 30 December 2024                                    C. Jennings
                                                                    Cisco
-                                                            25 June 2024
+                                                            28 June 2024
 
 
                BBR Improvements for Real-Time connections
@@ -41,7 +41,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 27 December 2024.
+   This Internet-Draft will expire on 30 December 2024.
 
 Copyright Notice
 
@@ -129,7 +129,7 @@ Table of Contents
    to obtain a good experience without creating queues.
 
    Real-time transmissions have a variable data rate.  Different media
-   codec have different behavior, but a common pattern is to
+   codecs have different behavior, but a common pattern is to
    periodically send "fully encoded" frames, followed by series of
    "differentially encoded" frame.  The fully encoded frames serve as
    possible synchronization points at which a recipient can start
@@ -189,7 +189,7 @@ Table of Contents
    queued at the bottleneck.  If the bottleneck has sufficient buffers,
    the queue size will increase until the amount of bytes in transit
    matches the CWND value.  The RTT will increase to twice the min RTT,
-   and will remind at that level for 3 roundtrips, which means 6 times
+   and will remain at that level for 3 roundtrips, which means 6 times
    the minimum RTT.
 
    The extra buffers and the extra delays do affect the performance of
@@ -310,7 +310,7 @@ Table of Contents
    progressively.  Maybe we have something systematic here?  The
    application always stays within the limits posed by congestion
    control, which means that the measured rate will always be lower than
-   the allowed rate.. BBR sometimes move to a "probe BW UP" state, but
+   the allowed rate.  BBR sometimes move to a "probe BW UP" state, but
    the application does not appear to push much more transmission during
    that state, so the measured rate does not really increase.
 
