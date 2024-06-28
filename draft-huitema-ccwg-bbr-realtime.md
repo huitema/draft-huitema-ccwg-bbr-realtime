@@ -277,7 +277,7 @@ The bandwidth will be restored when the position or orientation of the device
 changes again, or if the obstacles are removed. When that happens, we expect
 that the congestion control algorithm will find out rapidly and let the application
 resume full transmission, but this will only happen after when BBR reaches the
-ProbeBW UP state, which may take a large number of RTTs with BBR v3. 
+ProbeBW UP state, which may take a large number of RTTs with BBR v3.
 
 ## Downward drift
 
