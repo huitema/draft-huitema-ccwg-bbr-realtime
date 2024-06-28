@@ -65,7 +65,7 @@ Table of Contents
      3.1.  Extra delays during initial startup
      3.2.  Sensitivity to early bandwidth estimation
      3.3.  Wi-Fi suspension
-     3.4.  Spotty or Bad WIFI Transmission
+     3.4.  Spotty or Bad Wi-Fi Transmission
      3.5.  Downward drift
      3.6.  Lingering in Probe BW UP state
    4.  Proposed improvements
@@ -281,23 +281,37 @@ Table of Contents
    random events, we may see the 360p video freezing while the 1080p
    video is still animating.
 
-3.4.  Spotty or Bad WIFI Transmission
+3.4.  Spotty or Bad Wi-Fi Transmission
 
-   WIFI transmission experiencing reduction in available bandwidth
-   compounded with sustained packet losses causes couple of major
-   issues.
+   Wi-Fi bandwidth can drop suddenly due to small changes in the
+   position or orientation of the device, or if a mobile obstacle like a
+   human body moves into the path of transmission.  We see small events
+   causing a drastic reduction in bandwidth, and sometimes a marked
+   increase in packet loss rates.  We expect that the congestion control
+   algorithm will quickly detect the bandwidth reduction, and inform the
+   application, but in practice the detection always lag the event.
 
-   *  As with wifi suspension scenario, the senders expect a reduction
-      in bandwidth and a delayed detection of this condition causes less
-      important packets (say 1080p) to be enqueued for transmission.
+   As in the Wi-Fi suspension scenario, the delay in detecting the
+   bandwidth reduction causes priority inversions.  The application will
+   continue sending data at the previously allowed rate for some time,
+   which will cause less important packets (say 1080p) to be enqueued
+   for transmission.  These packets will likely be queued in front of
+   the Wi-Fi driver, and will be transmitted before any more urgent data
+   can be sent.
 
-   *  Packet loss triggered retransmissions leads to increased data in
-      flight
+   BBRv3 will reduce the CWND quickly if packet losses are detected, but
+   these losses will typically only be detected after a couple of RTT --
+   or maybe more if the packet queues are allowed to grow to large
+   sizes.  The effect is amplified if the pacing rate or the CWND was
+   over estimated before the event, maybe because the connection was
+   application limited.
 
-   Both of these conditions result in negative compounding effects where
-   less important packets ends up consuming more of the available
-   bandwidth, thus causing priority inversion and wasted bandwidth due
-   to unnecessary retransmissions.
+   The bandwidth will be restored when the position or orientation of
+   the device changes again, or if the obstacles are removed.  When that
+   happens, we expect that the congestion control algorithm will find
+   out rapidly and let the application resume full transmission, but
+   this will only happen after when BBR reaches the ProbeBW UP state,
+   which may take a large number of RTTs with BBR v3.
 
 3.5.  Downward drift
 
@@ -428,7 +442,7 @@ Table of Contents
    packets until a next acknowledgement is received.  The "feedback
    lost" event typically arrives sooner than the PTO event, and thus
    helps avoiding queue building during the "undetected" phase of
-   suspension defined in
+   suspension defined in Section 3.3.
 
 4.5.  Exit ProbeBW-Up on delay increase.
 
@@ -463,7 +477,7 @@ Table of Contents
    and the bandwidth discovered by BBR is never greater than the highest
    bandwidth previously used by the application.  This can slow down the
    transmission of data during peaks, for example when the video codec
-   decides to produce a "self referenced" frame sometimes called
+   decides to produce a "self referenced" frame (sometimes called
    I-Frame).  To solve that, we tried an option to add "filler" traffic
    during the "probe BW UP" phases, instructing the QUIC code to
    schedule redundant copies of the previously transmitted packets in
