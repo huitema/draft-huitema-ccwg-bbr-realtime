@@ -455,13 +455,6 @@ We do not believe that changes in the BBR implementation introduce new security 
 This document has no IANA actions.
 
 
---- back
-
-# Acknowledgments
-{:numbered="false"}
-
-TODO acknowledge.
-
 # Implementation in Picoquic
 
 The proposed improvements were incorporated in the
@@ -487,3 +480,10 @@ through a series of pull requests:
   If the measured bandwidth if larger than twice the bandwidth when entering the probe state,
   re-enter startup. This fixes issues when exiting a "Spotty or Bad Wi-Fi Transmission" condition,
   making sure that the measured bandwidth quickly catches up with the new conditions.
+
+--- back
+
+# Acknowledgments
+{:numbered="false"}
+
+TODO acknowledge.
