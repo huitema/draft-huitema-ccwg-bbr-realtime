@@ -461,3 +461,29 @@ This document has no IANA actions.
 {:numbered="false"}
 
 TODO acknowledge.
+
+# Implementation in Picoquic
+
+The proposed improvements were incorporated in the
+[picoquic implementation of QUIC](https://github.com/private-octopus/picoquic)
+through a series of pull requests:
+
+* [Update BBR code to BBRv3, PR 1624](https://github.com/private-octopus/picoquic/pull/1624):
+  implement BBRv3 based on {{I-D.cardwell-iccrg-bbr-congestion-control}} and
+  {{BBRv3-Slides}}.
+* [Add Startup resume state, PR 1629](https://github.com/private-octopus/picoquic/pull/1629):
+  implementation in BBR of the
+  ["careful resume" draft](https://datatracker.ietf.org/doc/draft-ietf-tsvwg-careful-resume/)
+* [Add RTT tests to BBRv3, PR 1634](https://github.com/private-octopus/picoquic/pull/1629):
+  implement "exit startup on RTT increase".
+* [Fix BBR Probe UP and probe RTT, PR 1670](https://github.com/private-octopus/picoquic/pull/1670):
+  implement "Exit ProbeBW-Up on delay increase".
+* [Notification of sudden congestion, PR 1672](https://github.com/private-octopus/picoquic/pull/1672):
+  This is the first part of addressing "Wi-Fi suspension" and also "Spotty or Bad Wi-Fi Transmission"
+  by ensuring immediate reaction even in bandwidth limited cases.
+* [Notification of loss of feedback, PR 1680](https://github.com/private-octopus/picoquic/pull/1680):
+  implement "Detection of feedback loss".
+* [Reenter startup after big BW increase, PR 1699](https://github.com/private-octopus/picoquic/pull/1699):
+  If the measured bandwidth if larger than twice the bandwidth when entering the probe state,
+  re-enter startup. This fixes issues when exiting a "Spotty or Bad Wi-Fi Transmission" condition,
+  making sure that the measured bandwidth quickly catches up with the new conditions.
