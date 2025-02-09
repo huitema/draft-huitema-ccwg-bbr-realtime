@@ -5,9 +5,9 @@
 Network Working Group                                         C. Huitema
 Internet-Draft                                      Private Octopus Inc.
 Intended status: Informational                             S. Nandakumar
-Expires: 30 December 2024                                    C. Jennings
+Expires: 13 August 2025                                      C. Jennings
                                                                    Cisco
-                                                            28 June 2024
+                                                         9 February 2025
 
 
                BBR Improvements for Real-Time connections
@@ -41,11 +41,11 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 30 December 2024.
+   This Internet-Draft will expire on 13 August 2025.
 
 Copyright Notice
 
-   Copyright (c) 2024 IETF Trust and the persons identified as the
+   Copyright (c) 2025 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -80,9 +80,10 @@ Table of Contents
      5.2.  Flow control low priority streams
    6.  Security Considerations
    7.  IANA Considerations
-   8.  References
-     8.1.  Normative References
-     8.2.  Informative References
+   8.  Implementation in Picoquic
+   9.  References
+     9.1.  Normative References
+     9.2.  Informative References
    Acknowledgments
    Authors' Addresses
 
@@ -534,9 +535,50 @@ Table of Contents
 
    This document has no IANA actions.
 
-8.  References
+8.  Implementation in Picoquic
 
-8.1.  Normative References
+   The proposed improvements were incorporated in the picoquic
+   implementation of QUIC (https://github.com/private-octopus/picoquic)
+   through a series of pull requests:
+
+   *  Update BBR code to BBRv3, PR 1624 (https://github.com/private-
+      octopus/picoquic/pull/1624): implement BBRv3 based on
+      [I-D.cardwell-iccrg-bbr-congestion-control] and [BBRv3-Slides].
+
+   *  Add Startup resume state, PR 1629 (https://github.com/private-
+      octopus/picoquic/pull/1629): implementation in BBR of the "careful
+      resume" draft (https://datatracker.ietf.org/doc/draft-ietf-tsvwg-
+      careful-resume/)
+
+   *  Add RTT tests to BBRv3, PR 1634 (https://github.com/private-
+      octopus/picoquic/pull/1629): implement "exit startup on RTT
+      increase".
+
+   *  Fix BBR Probe UP and probe RTT, PR 1670 (https://github.com/
+      private-octopus/picoquic/pull/1670): implement "Exit ProbeBW-Up on
+      delay increase".
+
+   *  Notification of sudden congestion, PR 1672 (https://github.com/
+      private-octopus/picoquic/pull/1672): This is the first part of
+      addressing "Wi-Fi suspension" and also "Spotty or Bad Wi-Fi
+      Transmission" by ensuring immediate reaction even in bandwidth
+      limited cases.
+
+   *  Notification of loss of feedback, PR 1680 (https://github.com/
+      private-octopus/picoquic/pull/1680): implement "Detection of
+      feedback loss".
+
+   *  Reenter startup after big BW increase, PR 1699
+      (https://github.com/private-octopus/picoquic/pull/1699): If the
+      measured bandwidth if larger than twice the bandwidth when
+      entering the probe state, re-enter startup.  This fixes issues
+      when exiting a "Spotty or Bad Wi-Fi Transmission" condition,
+      making sure that the measured bandwidth quickly catches up with
+      the new conditions.
+
+9.  References
+
+9.1.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -547,7 +589,7 @@ Table of Contents
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
 
-8.2.  Informative References
+9.2.  Informative References
 
    [RFC9000]  Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based
               Multiplexed and Secure Transport", RFC 9000,
@@ -565,16 +607,16 @@ Table of Contents
    [I-D.ietf-quic-ack-frequency]
               Iyengar, J., Swett, I., and M. Kühlewind, "QUIC
               Acknowledgment Frequency", Work in Progress, Internet-
-              Draft, draft-ietf-quic-ack-frequency-09, 30 April 2024,
+              Draft, draft-ietf-quic-ack-frequency-10, 29 August 2024,
               <https://datatracker.ietf.org/doc/html/draft-ietf-quic-
-              ack-frequency-09>.
+              ack-frequency-10>.
 
    [I-D.ietf-moq-transport]
               Curley, L., Pugin, K., Nandakumar, S., Vasiliev, V., and
               I. Swett, "Media over QUIC Transport", Work in Progress,
-              Internet-Draft, draft-ietf-moq-transport-04, 29 May 2024,
-              <https://datatracker.ietf.org/doc/html/draft-ietf-moq-
-              transport-04>.
+              Internet-Draft, draft-ietf-moq-transport-07, 21 October
+              2024, <https://datatracker.ietf.org/doc/html/draft-ietf-
+              moq-transport-07>.
 
    [BBRv3-Slides]
               Cardwell, N., Cheng, Y., Yang, K., Morley, D., Hassas
