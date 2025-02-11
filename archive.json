@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-01-30T00:17:12.162266+00:00",
+  "timestamp": "2025-02-11T00:17:39.889889+00:00",
   "repo": "huitema/draft-huitema-ccwg-bbr-realtime",
   "labels": [
     {
@@ -456,6 +456,34 @@
           "comments": []
         }
       ]
+    },
+    {
+      "number": 11,
+      "id": "PR_kwDOLnYg686KitYK",
+      "title": "Update GitHub version of modules in GitHub actions",
+      "url": "https://github.com/huitema/draft-huitema-ccwg-bbr-realtime/pull/11",
+      "state": "MERGED",
+      "author": "huitema",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2025-02-09T07:02:32Z",
+      "updatedAt": "2025-02-09T07:18:54Z",
+      "baseRepository": "huitema/draft-huitema-ccwg-bbr-realtime",
+      "baseRefName": "main",
+      "baseRefOid": "5b470f3f933dc119260bd9ea591189b0a127ffcb",
+      "headRepository": "huitema/draft-huitema-ccwg-bbr-realtime",
+      "headRefName": "github-version",
+      "headRefOid": "c4ef7714e6bf9ea52225d15119bfc9526dec03ee",
+      "closedAt": "2025-02-09T07:18:54Z",
+      "mergedAt": "2025-02-09T07:18:54Z",
+      "mergedBy": "huitema",
+      "mergeCommit": {
+        "oid": "f800d8e3f9cf0aaff44b4eed429e75575607aa46"
+      },
+      "comments": [],
+      "reviews": []
     }
   ]
 }
